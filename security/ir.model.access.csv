@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_electric_asset_management_zona,electric.asset.management.zona,model_electric_asset_management_zona,,1,1,1,1
+access_electric_asset_management_dispositivo,electric.asset.management.dispositivo,model_electric_asset_management_dispositivo,,1,1,1,1
+access_electric_asset_management_medicion,electric.asset.management.medicion,model_electric_asset_management_medicion,,1,1,1,1
+access_electric_asset_management_alerta,electric.asset.management.alerta,model_electric_asset_management_alerta,,1,1,1,1
+access_electric_asset_management_usuario,electric.asset.management.usuario,model_electric_asset_management_usuario,,1,1,1,1
+access_electric_asset_management_reporte,electric.asset.management.reporte,model_electric_asset_management_reporte,,1,1,1,1

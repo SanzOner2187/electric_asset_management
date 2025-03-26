@@ -1,0 +1,518 @@
+<odoo>
+
+        <!-- Menu para el modulo -->
+        <menuitem id="menu_electric_asset_management_root" name="Gestión Energética ISO 50001"/>
+   
+    <!-- Vista de Zonas -->
+    <record id="view_electric_asset_management_zona_tree" model="ir.ui.view">
+        <field name="name">electric.asset.management.zona.tree</field>
+        <field name="model">electric.asset.management.zona</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="ubicacion"/>
+                <field name="es_area_critica" widget="boolean_button"/>
+                <field name="intensidad_energetica"/>
+                <field name="objetivo_reduccion"/>
+                <field name="consumo_referencia"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_electric_asset_management_zona_form" model="ir.ui.view">
+        <field name="name">electric.asset.management.zona.form</field>
+        <field name="model">electric.asset.management.zona</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+
+                            <div>Reporte Energético</div>
+                    </div>
+                    
+                    <group>
+                        <field name="name"/>
+                        <field name="description"/>
+                        <field name="ubicacion"/>
+                        <field name="area_m2"/>
+                        <field name="es_area_critica"/>
+                    </group>
+                    
+                    <group string="Gestión Energética ISO 50001">
+                        <field name="consumo_referencia"/>
+                        <field name="intensidad_energetica" readonly="1"/>
+                        <field name="objetivo_reduccion"/>
+                        <field name="responsable_energia"/>
+                        <field name="ultima_auditoria"/>
+                        <field name="proxima_auditoria"/>
+                    </group>
+                    
+                    <group string="Responsables">
+                        <field name="responsable_energia"/>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Observaciones">
+                            <field name="observaciones_energia"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Acción para Zonas -->
+    <record id="action_electric_asset_management_zona" model="ir.actions.act_window">
+        <field name="name">Zonas Energéticas</field>
+        <field name="res_model">electric.asset.management.zona</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Menú para Zonas -->
+    <menuitem id="menu_electric_asset_management_zona" name="Zonas Energéticas" parent="menu_electric_asset_management_root" action="action_electric_asset_management_zona"/>
+
+<!-- Vista de Dispositivos (Tree) -->
+<record id="view_electric_asset_management_dispositivo_tree" model="ir.ui.view">
+    <field name="name">electric.asset.management.dispositivo.tree</field>
+    <field name="model">electric.asset.management.dispositivo</field>
+    <field name="arch" type="xml">
+        <tree>
+            <field name="name"/>
+            <field name="tipo"/>
+            <field name="id_zona"/>
+            <field name="consumo_energetico"/>
+            <field name="consumo_mensual_kwh"/>
+            <field name="etiqueta_eficiencia"/>
+            <field name="eficiencia_operativa" widget="progressbar"/>
+            <field name="es_equipo_critico" widget="boolean_button"/>
+            <field name="estado"/>
+        </tree>
+    </field>
+</record>
+
+<!-- Vista de Dispositivos (Form) -->
+<record id="view_electric_asset_management_dispositivo_form" model="ir.ui.view">
+    <field name="name">electric.asset.management.dispositivo.form</field>
+    <field name="model">electric.asset.management.dispositivo</field>
+    <field name="arch" type="xml">
+        <form>
+            <sheet>
+                <div class="oe_button_box" name="button_box">
+                    <button name="action_generar_reporte_eficiencia" type="object" 
+                            class="oe_stat_button" icon="fa-file-text">
+                        <div>Reporte Eficiencia</div>
+                    </button>
+                </div>
+
+                <group string="Información General">
+                    <field name="name"/>
+                    <field name="tipo"/>
+                    <field name="marca"/>
+                    <field name="modelo"/>
+                    <field name="numero_serie"/>
+                    <field name="id_zona"/>
+                    <field name="estado"/>
+                    <field name="fecha_registro"/>
+                    <field name="vida_util_estimada"/>
+                    <field name="etiqueta_eficiencia"/>
+                    <field name="es_equipo_critico"/>
+                </group>
+
+                <group string="Responsable">
+                    <field name="id_usuario"/>
+                    <field name="contacto_responsable"/> 
+                </group>
+
+                <group string="Consumo Energético">
+                    <field name="consumo_energetico"/>
+                    <field name="umbral_alerta_consumo"/>
+                    <field name="horas_uso_diario"/>
+                    <field name="dias_uso_semana"/>
+                    <field name="consumo_diario_kwh" readonly="1"/>
+                    <field name="consumo_mensual_kwh" readonly="1"/>
+                    <field name="costo_kwh"/>
+                    <field name="costo_diario" readonly="1"/>
+                    <field name="costo_mensual" readonly="1"/>
+                    <field name="modo_bajo_consumo"/>
+                    <field name="potencia_bajo_consumo"/>
+                </group>
+
+                <group string="Mantenimiento">
+                    <field name="fecha_ultima_revision"/>
+                    <field name="fuente_alimentacion"/>
+                    <field name="fecha_calibracion"/>
+                    <field name="proxima_calibracion"/>
+                </group>
+
+                <notebook>
+                    <page string="Indicadores ISO 50001">
+                        <group>
+                            <field name="eficiencia_operativa" widget="progressbar"/>
+                            <field name="enpi"/>
+                        </group>
+                        <group string="Oportunidades de Mejora">
+                            <field name="oportunidades_mejora" readonly="1"/>
+                        </group>
+                    </page>
+                    
+                    <page string="Histórico de Mediciones">
+                        <field name="medicion_ids" context="{'default_id_dispositivo': id}">
+                            <tree>
+                                <field name="fecha_hora"/>
+                                <field name="consumo"/>
+                                <field name="es_medicion_atipica" widget="boolean_button"/>
+                                <field name="desviacion_estandar"/>
+                                <field name="temperatura_ambiente"/>
+                                <field name="humedad_relativa"/>
+                            </tree>
+                        </field>
+                    </page>
+                </notebook>
+            </sheet>
+        </form>
+    </field>
+</record>
+
+<!-- Acción para Dispositivos -->
+<record id="action_electric_asset_management_dispositivo" model="ir.actions.act_window">
+    <field name="name">Dispositivos Energéticos</field>
+    <field name="res_model">electric.asset.management.dispositivo</field>
+    <field name="view_mode">tree,form</field>
+</record>
+
+<!-- Menú para Dispositivos -->
+<menuitem id="menu_electric_asset_management_dispositivo" name="Dispositivos Energéticos" parent="menu_electric_asset_management_root" action="action_electric_asset_management_dispositivo"/>
+
+<!-- Vista de Mediciones (Tree) -->
+<record id="view_electric_asset_management_medicion_tree" model="ir.ui.view">
+    <field name="name">electric.asset.management.medicion.tree</field>
+    <field name="model">electric.asset.management.medicion</field>
+    <field name="arch" type="xml">
+        <tree>
+            <field name="id_dispositivo"/>
+            <field name="fecha_hora"/>
+            <field name="consumo"/>
+            <field name="es_medicion_atipica" widget="boolean_button"/>
+            <field name="desviacion_estandar"/>
+            <field name="temperatura_ambiente"/>
+            <field name="humedad_relativa"/>
+            <field name="estado_dispositivo"/>
+        </tree>
+    </field>
+</record>
+
+<!-- Vista de Mediciones (Form) -->
+<record id="view_electric_asset_management_medicion_form" model="ir.ui.view">
+    <field name="name">electric.asset.management.medicion.form</field>
+    <field name="model">electric.asset.management.medicion</field>
+    <field name="arch" type="xml">
+        <form>
+            <sheet>
+                <group>
+                    <field name="id_dispositivo"/>
+                    <field name="fecha_hora"/>
+                    <field name="consumo"/>
+                    <field name="es_medicion_atipica" readonly="1"/>
+                    <field name="desviacion_estandar" readonly="1"/>
+                    <field name="temperatura_ambiente"/>
+                    <field name="humedad_relativa"/>
+                    <field name="factor_potencia"/>
+                    <field name="estado_dispositivo"/>
+                    <field name="observaciones"/>
+                </group>
+            </sheet>
+        </form>
+    </field>
+</record>
+
+    <!-- Acción para Mediciones -->
+    <record id="action_electric_asset_management_medicion" model="ir.actions.act_window">
+        <field name="name">Mediciones Energéticas</field>
+        <field name="res_model">electric.asset.management.medicion</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Menú para Mediciones -->
+    <menuitem id="menu_electric_asset_management_medicion" name="Mediciones Energéticas" parent="menu_electric_asset_management_root" action="action_electric_asset_management_medicion"/>
+
+<!-- Vista Kanban para Alertas -->
+<record id="view_electric_asset_management_alerta_kanban" model="ir.ui.view">
+    <field name="name">electric.asset.management.alerta.kanban</field>
+    <field name="model">electric.asset.management.alerta</field>
+    <field name="arch" type="xml">
+        <kanban class="o_kanban_mobile">
+            <field name="id_dispositivo"/>
+            <field name="tipo_alerta"/>
+            <field name="fecha_hora"/>
+            <field name="estado"/>
+            <field name="prioridad"/>
+            <field name="categoria"/>
+            <field name="impacto_energetico"/>
+            
+            <templates>
+                <t t-name="kanban-box">
+                    <div t-attf-class="oe_kanban_global_click oe_kanban_card oe_kanban_color_{{kanban_getcolor(record.prioridad.value)}}">
+                        <div class="o_kanban_record_title">
+                            <strong><field name="id_dispositivo"/></strong>
+                            <span class="float-right badge" t-attf-class="badge-{{ 'danger' if record.tipo_alerta.raw_value == 'critica' else 'warning' if record.tipo_alerta.raw_value == 'advertencia' else 'info' }}">
+                                <field name="tipo_alerta"/>
+                            </span>
+                        </div>
+                        <div>
+                            <span><field name="categoria"/></span>
+                            <span class="float-right">
+                                <i class="fa fa-bolt" t-if="record.impacto_energetico.raw_value == 'alto'"/>
+                                <i class="fa fa-bolt text-muted" t-if="record.impacto_energetico.raw_value == 'medio'"/>
+                                <i class="fa fa-bolt text-light" t-if="record.impacto_energetico.raw_value == 'bajo'"/>
+                            </span>
+                        </div>
+                        <div>
+                            <span>Prioridad: <field name="prioridad"/></span>
+                            <span class="float-right">Estado: <field name="estado"/></span>
+                        </div>
+                        <div t-if="record.descripcion.value">
+                            <small><field name="descripcion"/></small>
+                        </div>
+                        <div class="text-right">
+                            <small><field name="fecha_hora"/></small>
+                        </div>
+                    </div>
+                </t>
+            </templates>
+        </kanban>
+    </field>
+</record>
+
+<!-- Vista Formulario para Alertas -->
+<record id="view_electric_asset_management_alerta_form" model="ir.ui.view">
+    <field name="name">electric.asset.management.alerta.form</field>
+    <field name="model">electric.asset.management.alerta</field>
+    <field name="arch" type="xml">
+        <form>
+            <sheet>
+                <div class="oe_button_box" name="button_box">
+                    <button name="action_resolver_alerta" type="object" 
+                            class="oe_stat_button" icon="fa-check" 
+                            attrs="{'invisible': [('estado','=','resuelta')]}">
+                        <div>Resolver</div>
+                    </button>
+                    <button name="action_generar_reporte" type="object" 
+                            class="oe_stat_button" icon="fa-file-text">
+                        <div>Generar Reporte</div>
+                    </button>
+                </div>
+                
+                <group>
+                    <field name="id_dispositivo"/>
+                    <field name="tipo_alerta"/>
+                    <field name="categoria"/>
+                    <field name="impacto_energetico"/>
+                    <field name="prioridad"/>
+                    <field name="fecha_hora"/>
+                    <field name="estado"/>
+                </group>
+                
+                <group string="Descripción">
+                    <field name="descripcion"/>
+                </group>
+                
+                <group string="Gestión">
+                    <field name="responsable"/>
+                    <field name="acciones_tomadas"/>
+                    <field name="fecha_resolucion" attrs="{'readonly': [('estado','!=','resuelta')]}"/>
+                </group>
+                
+                <notebook>
+                    <page string="Recomendaciones ISO 50001">
+                        <field name="recomendaciones" readonly="1"/>
+                    </page>
+                </notebook>
+            </sheet>
+        </form>
+    </field>
+</record>
+
+<!-- Acción para Alertas -->
+<record id="action_electric_asset_management_alerta" model="ir.actions.act_window">
+    <field name="name">Alertas Energéticas</field>
+    <field name="res_model">electric.asset.management.alerta</field>
+    <field name="view_mode">kanban,form</field>
+    <field name="context">{'search_default_pendiente': 1}</field>
+</record>
+
+<!-- Menú para Alertas -->
+<menuitem id="menu_electric_asset_management_alerta" name="Alertas Energéticas" parent="menu_electric_asset_management_root" action="action_electric_asset_management_alerta"/>
+
+    <!-- Vista de Usuarios -->
+    <record id="view_electric_asset_management_usuario_tree" model="ir.ui.view">
+        <field name="name">electric.asset.management.usuario.tree</field>
+        <field name="model">electric.asset.management.usuario</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="correo"/>
+                <field name="rol"/>
+                <field name="es_auditor_energia" widget="boolean_button"/>
+                <field name="area_responsable"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_electric_asset_management_usuario_form" model="ir.ui.view">
+        <field name="name">electric.asset.management.usuario.form</field>
+        <field name="model">electric.asset.management.usuario</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="correo"/>
+                        <field name="rol"/>
+                        <field name="contraseña" password="True"/>
+                    </group>
+                    
+                    <group string="Certificaciones ISO 50001">
+                        <field name="es_auditor_energia"/>
+                        <field name="certificaciones"/>
+                        <field name="fecha_ultimo_entrenamiento"/>
+                        <field name="area_responsable"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Acción para Usuarios -->
+    <record id="action_electric_asset_management_usuario" model="ir.actions.act_window">
+        <field name="name">Usuarios del Sistema</field>
+        <field name="res_model">electric.asset.management.usuario</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Menú para Usuarios -->
+    <menuitem id="menu_electric_asset_management_usuario" name="Usuarios del Sistema" parent="menu_electric_asset_management_root" action="action_electric_asset_management_usuario"/>
+
+<!-- Vista Kanban para Reportes -->
+<record id="view_electric_asset_management_reporte_kanban" model="ir.ui.view">
+    <field name="name">electric.asset.management.reporte.kanban</field>
+    <field name="model">electric.asset.management.reporte</field>
+    <field name="arch" type="xml">
+        <kanban>
+            <field name="id_usuario"/>
+            <field name="tipo_reporte"/>
+            <field name="fecha_generacion"/>
+            <field name="estado"/>
+            <field name="periodo_inicio"/>
+            <field name="periodo_fin"/>
+            <field name="consumo_total"/>
+            <field name="costos_asociados"/>
+            <field name="eficiencia_energetica"/>
+            <field name="objetivos_cumplidos"/>
+            <field name="desviacion_objetivo"/>
+            
+            <templates>
+                <t t-name="kanban-box">
+                    <div t-attf-class="oe_kanban_global_click oe_kanban_card oe_kanban_color_{{kanban_getcolor(record.tipo_reporte.value)}}">
+                        <div class="o_kanban_record_title">
+                            <strong><field name="tipo_reporte"/></strong>
+                            <span class="float-right badge" t-attf-class="badge-{{ 'success' if record.objetivos_cumplidos.raw_value else 'danger' }}">
+                                <field name="objetivos_cumplidos" widget="boolean_button"/>
+                            </span>
+                        </div>
+                        <div>
+                            <span>Generado por: <field name="id_usuario"/></span>
+                            <span class="float-right">
+                                <field name="fecha_generacion"/>
+                            </span>
+                        </div>
+                        <div>
+                            <span>Período: <field name="periodo_inicio"/> a <field name="periodo_fin"/></span>
+                        </div>
+                        <div>
+                            <span>Consumo: <field name="consumo_total"/> kWh</span>
+                            <span class="float-right">
+                                <field name="eficiencia_energetica" widget="progressbar" options="{'edit': false}"/>
+                            </span>
+                        </div>
+                        <div t-if="record.desviacion_objetivo.value != 0">
+                            <small t-attf-class="text-{{ 'success' if record.desviacion_objetivo.raw_value > 0 else 'danger' }}">
+                                Desviación: <field name="desviacion_objetivo"/>%
+                            </small>
+                        </div>
+                    </div>
+                </t>
+            </templates>
+        </kanban>
+    </field>
+</record>
+
+<!-- Vista Formulario para Reportes -->
+<record id="view_electric_asset_management_reporte_form" model="ir.ui.view">
+    <field name="name">electric.asset.management.reporte.form</field>
+    <field name="model">electric.asset.management.reporte</field>
+    <field name="arch" type="xml">
+        <form>
+            <sheet>
+                <div class="oe_button_box" name="button_box">
+                    <button name="action_generar_reporte_iso50001" type="object" 
+                            class="oe_stat_button" icon="fa-file-text" 
+                            attrs="{'invisible': [('estado','!=','borrador')]}">
+                        <div>Generar ISO 50001</div>
+                    </button>
+                    <button name="action_enviar_reporte" type="object" 
+                            class="oe_stat_button" icon="fa-send" 
+                            attrs="{'invisible': [('estado','!=','generado')]}">
+                        <div>Enviar</div>
+                    </button>
+                </div>
+                
+                <group>
+                    <field name="id_usuario"/>
+                    <field name="tipo_reporte"/>
+                    <field name="fecha_generacion"/>
+                    <field name="periodo_inicio"/>
+                    <field name="periodo_fin"/>
+                    <field name="estado"/>
+                </group>
+                
+                <group string="Dispositivos Incluidos">
+                    <field name="dispositivos_afectados" widget="many2many_tags"/>
+                </group>
+                
+                <group string="Métricas Energéticas">
+                    <field name="consumo_total"/>
+                    <field name="costos_asociados"/>
+                    <field name="eficiencia_energetica" widget="progressbar"/>
+                    <field name="enpi_promedio"/>
+                    <field name="objetivos_cumplidos"/>
+                    <field name="desviacion_objetivo"/>
+                </group>
+                
+                <notebook>
+                    <page string="Contenido">
+                        <field name="contenido"/>
+                    </page>
+                    
+                    <page string="Análisis ISO 50001">
+                        <field name="areas_mejora"/>
+                        <field name="recomendaciones"/>
+                        <field name="acciones_correctivas"/>
+                        <field name="seguimiento_requerido"/>
+                    </page>
+                </notebook>
+            </sheet>
+        </form>
+    </field>
+</record>
+
+<record id="action_electric_asset_management_reporte" model="ir.actions.act_window">
+    <field name="name">Reportes Energéticos</field>
+    <field name="res_model">electric.asset.management.reporte</field>
+    <field name="view_mode">kanban,form</field>
+    <field name="context">{'search_default_mensual': 1}</field>
+</record>
+
+<!-- Menú para Reportes -->
+<menuitem id="menu_electric_asset_management_reporte" name="Reportes Energéticos" parent="menu_electric_asset_management_root" action="action_electric_asset_management_reporte"/>
+
+</odoo>

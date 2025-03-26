@@ -1,0 +1,38 @@
+<odoo>
+    <!-- Acción del dashboard (definir primero) -->
+    <record id="action_dashboard_energy" model="ir.actions.client">
+        <field name="name">Dashboard Energético ISO 50001</field>
+        <field name="tag">electric_asset_management.dashboard</field>
+        <field name="target">fullscreen</field>
+    </record>
+
+    <!-- Menú del dashboard (referencia al action ya definido) -->
+    <menuitem id="menu_dashboard_energy" name="Dashboard Energético" parent="menu_electric_asset_management_root" action="action_dashboard_energy" sequence="10"/>
+
+    <!-- Template QWeb para el dashboard (versión corregida) -->
+    <template id="template_dashboard" inherit_id="web.layout">
+        <xpath expr="//head" position="inside">
+            <link rel="stylesheet" href="/web/static/lib/bootstrap/css/bootstrap.min.css"/>
+            <script src="/web/static/lib/chart/Chart.js"/>
+        </xpath>
+        <xpath expr="//body" position="inside">
+            <!-- Puedes agregar aquí contenido adicional o mantenerlo vacío -->
+        </xpath>
+    </template>
+
+    <!-- Template QWeb para el dashboard -->
+    <template id="template_dashboard_energy" inherit_id="web.layout">
+        <!-- Inserta los recursos en el head -->
+        <xpath expr="//head" position="inside">
+            <link rel="stylesheet" href="/web/static/lib/bootstrap/css/bootstrap.min.css"/>
+            <script src="/web/static/lib/chart/Chart.js"/>
+        </xpath>
+        <!-- Aquí puedes incluir el contenido adicional del dashboard en el body -->
+        <xpath expr="//body" position="inside">
+            <!-- Contenido del dashboard (por ejemplo, un div con el mini menú y gráficos) -->
+            <div class="oe_dashboard">
+                <!-- Aquí iría el mini menú y los gráficos -->
+            </div>
+        </xpath>
+    </template>
+</odoo>

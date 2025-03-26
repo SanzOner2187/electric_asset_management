@@ -1,0 +1,52 @@
+<!--
+<odoo>
+    <data>
+
+          <record id="object0" model="electric_asset_management.electric_asset_management">
+            <field name="name">Object 0</field>
+            <field name="value">0</field>
+          </record>
+
+          <record id="object1" model="electric_asset_management.electric_asset_management">
+            <field name="name">Object 1</field>
+            <field name="value">10</field>
+          </record>
+
+          <record id="object2" model="electric_asset_management.electric_asset_management">
+            <field name="name">Object 2</field>
+            <field name="value">20</field>
+          </record>
+
+          <record id="object3" model="electric_asset_management.electric_asset_management">
+            <field name="name">Object 3</field>
+            <field name="value">30</field>
+          </record>
+
+          <record id="object4" model="electric_asset_management.electric_asset_management">
+            <field name="name">Object 4</field>
+            <field name="value">40</field>
+          </record>
+
+    </data>
+</odoo>
+-->
+
+<odoo>
+    <record id="demo_zona_1" model="electric.asset.management.zona">
+        <field name="name">Zona 1</field>
+        <field name="description">Descripción de la Zona 1</field>
+        <field name="ubicacion">Ubicación 1</field>
+    </record>
+
+    <record id="demo_dispositivo_1" model="electric.asset.management.dispositivo">
+        <field name="name">Dispositivo 1</field>
+        <field name="tipo">Tipo 1</field>
+        <field name="marca">Marca 1</field>
+        <field name="modelo">Modelo 1</field>
+        <field name="consumo_energetico">100.0</field>
+        <field name="id_zona" ref="demo_zona_1"/>
+        <field name="estado">Activo</field>
+        <field name="vida_util_estimada">365</field>
+        <field name="cumple_estandar">True</field>
+    </record>
+</odoo>
