@@ -1,5 +1,9 @@
 <odoo>
 
+
+        <!-- Menú principal -->
+        <menuitem id="menu_root" name="Gestión de Activos Eléctricos"/>
+
         <!-- Menu para el modulo -->
         <menuitem id="menu_electric_asset_management_root" name="Gestión Energética ISO 50001"/>
    
@@ -27,7 +31,7 @@
                 <sheet>
                     <div class="oe_button_box" name="button_box">
 
-                            <div>Reporte Energético</div>
+                            <div>Reportes</div>
                     </div>
                     
                     <group>
@@ -63,13 +67,13 @@
 
     <!-- Acción para Zonas -->
     <record id="action_electric_asset_management_zona" model="ir.actions.act_window">
-        <field name="name">Zonas Energéticas</field>
+        <field name="name">Lleva control del consumo en cada zona</field>
         <field name="res_model">electric.asset.management.zona</field>
         <field name="view_mode">tree,form</field>
     </record>
 
     <!-- Menú para Zonas -->
-    <menuitem id="menu_electric_asset_management_zona" name="Zonas Energéticas" parent="menu_electric_asset_management_root" action="action_electric_asset_management_zona"/>
+    <menuitem id="menu_electric_asset_management_zona" name="Zonas" parent="menu_electric_asset_management_root" action="action_electric_asset_management_zona"/>
 
 <!-- Vista de Dispositivos (Tree) -->
 <record id="view_electric_asset_management_dispositivo_tree" model="ir.ui.view">
@@ -175,13 +179,13 @@
 
 <!-- Acción para Dispositivos -->
 <record id="action_electric_asset_management_dispositivo" model="ir.actions.act_window">
-    <field name="name">Dispositivos Energéticos</field>
+    <field name="name">Todos los dispositivos en la empresa</field>
     <field name="res_model">electric.asset.management.dispositivo</field>
     <field name="view_mode">tree,form</field>
 </record>
 
 <!-- Menú para Dispositivos -->
-<menuitem id="menu_electric_asset_management_dispositivo" name="Dispositivos Energéticos" parent="menu_electric_asset_management_root" action="action_electric_asset_management_dispositivo"/>
+<menuitem id="menu_electric_asset_management_dispositivo" name="Dispositivos" parent="menu_electric_asset_management_root" action="action_electric_asset_management_dispositivo"/>
 
 <!-- Vista de Mediciones (Tree) -->
 <record id="view_electric_asset_management_medicion_tree" model="ir.ui.view">
@@ -227,13 +231,13 @@
 
     <!-- Acción para Mediciones -->
     <record id="action_electric_asset_management_medicion" model="ir.actions.act_window">
-        <field name="name">Mediciones Energéticas</field>
+        <field name="name">Mediciones para llevar control de los dispositivos</field>
         <field name="res_model">electric.asset.management.medicion</field>
         <field name="view_mode">tree,form</field>
     </record>
 
     <!-- Menú para Mediciones -->
-    <menuitem id="menu_electric_asset_management_medicion" name="Mediciones Energéticas" parent="menu_electric_asset_management_root" action="action_electric_asset_management_medicion"/>
+    <menuitem id="menu_electric_asset_management_medicion" name="Mediciones" parent="menu_electric_asset_management_root" action="action_electric_asset_management_medicion"/>
 
 <!-- Vista Kanban para Alertas -->
 <record id="view_electric_asset_management_alerta_kanban" model="ir.ui.view">
@@ -254,16 +258,20 @@
                     <div t-attf-class="oe_kanban_global_click oe_kanban_card oe_kanban_color_{{kanban_getcolor(record.prioridad.value)}}">
                         <div class="o_kanban_record_title">
                             <strong><field name="id_dispositivo"/></strong>
-                            <span class="float-right badge" t-attf-class="badge-{{ 'danger' if record.tipo_alerta.raw_value == 'critica' else 'warning' if record.tipo_alerta.raw_value == 'advertencia' else 'info' }}">
+                            <span class="float-right badge" t-att-class="{
+                                'badge-danger': record.tipo_alerta.raw_value === 'critica',
+                                'badge-warning': record.tipo_alerta.raw_value === 'advertencia',
+                                'badge-info': ['critica', 'advertencia'].indexOf(record.tipo_alerta.raw_value) === -1
+                            }">
                                 <field name="tipo_alerta"/>
                             </span>
                         </div>
                         <div>
                             <span><field name="categoria"/></span>
                             <span class="float-right">
-                                <i class="fa fa-bolt" t-if="record.impacto_energetico.raw_value == 'alto'"/>
-                                <i class="fa fa-bolt text-muted" t-if="record.impacto_energetico.raw_value == 'medio'"/>
-                                <i class="fa fa-bolt text-light" t-if="record.impacto_energetico.raw_value == 'bajo'"/>
+                                <i class="fa fa-bolt" t-if="record.impacto_energetico.raw_value === 'alto'"/>
+                                <i class="fa fa-bolt text-muted" t-if="record.impacto_energetico.raw_value === 'medio'"/>
+                                <i class="fa fa-bolt text-light" t-if="record.impacto_energetico.raw_value === 'bajo'"/>
                             </span>
                         </div>
                         <div>
@@ -334,14 +342,14 @@
 
 <!-- Acción para Alertas -->
 <record id="action_electric_asset_management_alerta" model="ir.actions.act_window">
-    <field name="name">Alertas Energéticas</field>
+    <field name="name">Alertas sobre el consumo de energia</field>
     <field name="res_model">electric.asset.management.alerta</field>
     <field name="view_mode">kanban,form</field>
     <field name="context">{'search_default_pendiente': 1}</field>
 </record>
 
 <!-- Menú para Alertas -->
-<menuitem id="menu_electric_asset_management_alerta" name="Alertas Energéticas" parent="menu_electric_asset_management_root" action="action_electric_asset_management_alerta"/>
+<menuitem id="menu_electric_asset_management_alerta" name="Alertas" parent="menu_electric_asset_management_root" action="action_electric_asset_management_alerta"/>
 
     <!-- Vista de Usuarios -->
     <record id="view_electric_asset_management_usuario_tree" model="ir.ui.view">
@@ -368,7 +376,7 @@
                         <field name="name"/>
                         <field name="correo"/>
                         <field name="rol"/>
-                        <field name="contraseña" password="True"/>
+                        <field name="password" password="True"/>
                     </group>
                     
                     <group string="Certificaciones ISO 50001">
@@ -390,7 +398,7 @@
     </record>
 
     <!-- Menú para Usuarios -->
-    <menuitem id="menu_electric_asset_management_usuario" name="Usuarios del Sistema" parent="menu_electric_asset_management_root" action="action_electric_asset_management_usuario"/>
+    <menuitem id="menu_electric_asset_management_usuario" name="Usuarios" parent="menu_electric_asset_management_root" action="action_electric_asset_management_usuario"/>
 
 <!-- Vista Kanban para Reportes -->
 <record id="view_electric_asset_management_reporte_kanban" model="ir.ui.view">
@@ -412,10 +420,10 @@
             
             <templates>
                 <t t-name="kanban-box">
-                    <div t-attf-class="oe_kanban_global_click oe_kanban_card oe_kanban_color_{{kanban_getcolor(record.tipo_reporte.value)}}">
+                    <div t-att-class="'oe_kanban_global_click oe_kanban_card oe_kanban_color_' + kanban_getcolor(record.tipo_reporte.value)">
                         <div class="o_kanban_record_title">
                             <strong><field name="tipo_reporte"/></strong>
-                            <span class="float-right badge" t-attf-class="badge-{{ 'success' if record.objetivos_cumplidos.raw_value else 'danger' }}">
+                            <span class="float-right badge" t-att-class="record.objetivos_cumplidos.raw_value ? 'badge-success' : 'badge-danger'">
                                 <field name="objetivos_cumplidos" widget="boolean_button"/>
                             </span>
                         </div>
@@ -435,7 +443,7 @@
                             </span>
                         </div>
                         <div t-if="record.desviacion_objetivo.value != 0">
-                            <small t-attf-class="text-{{ 'success' if record.desviacion_objetivo.raw_value > 0 else 'danger' }}">
+                            <small t-att-class="record.desviacion_objetivo.raw_value > 0 ? 'text-success' : 'text-danger'">
                                 Desviación: <field name="desviacion_objetivo"/>%
                             </small>
                         </div>
@@ -506,13 +514,13 @@
 </record>
 
 <record id="action_electric_asset_management_reporte" model="ir.actions.act_window">
-    <field name="name">Reportes Energéticos</field>
+    <field name="name">Reportes sobre energia</field>
     <field name="res_model">electric.asset.management.reporte</field>
     <field name="view_mode">kanban,form</field>
     <field name="context">{'search_default_mensual': 1}</field>
 </record>
 
 <!-- Menú para Reportes -->
-<menuitem id="menu_electric_asset_management_reporte" name="Reportes Energéticos" parent="menu_electric_asset_management_root" action="action_electric_asset_management_reporte"/>
+<menuitem id="menu_electric_asset_management_reporte" name="Reportes" parent="menu_electric_asset_management_root" action="action_electric_asset_management_reporte"/>
 
 </odoo>

@@ -89,7 +89,14 @@ class Dispositivo(models.Model):
     umbral_alerta_consumo = fields.Float(string='Umbral de Alerta (Watts)', help="Consumo máximo permitido antes de generar alerta")
     fecha_calibracion = fields.Date(string='Fecha de Calibración')
     proxima_calibracion = fields.Date(string='Próxima Calibración')
-    eficiencia_operativa = fields.Float(string='Eficiencia Operativa (%)', compute='_compute_eficiencia_operativa')
+    eficiencia_operativa = fields.Float(
+        string='Eficiencia Operativa (%)', 
+        compute='_compute_eficiencia_operativa',
+        store=True,  # Cambiar a True para almacenarlo
+        readonly=True,
+        digits=(12, 2),
+        help="Eficiencia operativa calculada en porcentaje"
+    )    
     oportunidades_mejora = fields.Text(string='Oportunidades de Mejora', compute='_compute_oportunidades_mejora')
     enpi = fields.Float(string='EnPI', compute='_compute_enpi', help="Indicador de Desempeño Energético según ISO 50001")
     
@@ -415,7 +422,7 @@ class Usuario(models.Model):
     name = fields.Char(string='Nombre', required=True)
     correo = fields.Char(string='Correo', unique=True)
     rol = fields.Char(string='Rol')
-    contraseña = fields.Char(string='Contraseña')
+    password = fields.Char(string='Contraseña', password=True)
     fecha_registro = fields.Datetime(string='Fecha de Registro', default=fields.Datetime.now)
     
     # Campos para ISO 50001

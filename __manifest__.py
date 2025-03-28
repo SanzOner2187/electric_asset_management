@@ -17,14 +17,6 @@
     'demo': [
         'demo/demo.xml',
     ],
-    'assets': {
-        'web.assets_backend': [
-            'static/src/js/electric_dashboard.js',
-        ],
-    },
-    'controllers': [
-        'controllers/dashboard.py',
-    ],
     'installable': True,
     'application': True,
 }
