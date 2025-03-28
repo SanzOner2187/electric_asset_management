@@ -180,7 +180,8 @@ class Dispositivo(models.Model):
     @api.onchange('id_usuario')
     def _onchange_id_usuario(self):
         if self.id_usuario:
-            self.contacto_responsable = self.id_usuario.correo
+            # Se usa 'login' (relacionado con el campo 'user_id.login') en lugar de 'correo'
+            self.contacto_responsable = self.id_usuario.login
         else:
             self.contacto_responsable = False
 
@@ -418,9 +419,10 @@ class Alerta(models.Model):
 class Usuario(models.Model):
     _name = 'electric.asset.management.usuario'
     _description = 'Usuarios del sistema'
-
-    name = fields.Char(string='Nombre', required=True)
-    correo = fields.Char(string='Correo', unique=True)
+    _inherits = {'res.users': 'user_id'}
+    
+    user_id = fields.Many2one('res.users', string='Nombre', required=True, ondelete='cascade')
+    login = fields.Char(related='user_id.login', string='Correo', store=True, readonly=False)
     rol = fields.Char(string='Rol')
     password = fields.Char(string='Contraseña', password=True)
     fecha_registro = fields.Datetime(string='Fecha de Registro', default=fields.Datetime.now)
@@ -430,6 +432,7 @@ class Usuario(models.Model):
     certificaciones = fields.Text(string='Certificaciones Energéticas')
     fecha_ultimo_entrenamiento = fields.Date(string='Último Entrenamiento')
     area_responsable = fields.Many2one('electric.asset.management.zona', string='Área Responsable')
+
 
 
 class Reporte(models.Model):
@@ -591,9 +594,10 @@ class Reporte(models.Model):
         destinatarios = set()
         for dispositivo in self.dispositivos_afectados:
             if dispositivo.id_zona and dispositivo.id_zona.responsable_energia:
-                destinatarios.add(dispositivo.id_zona.responsable_energia.correo)
+                # Utilizamos login en lugar de correo
+                destinatarios.add(dispositivo.id_zona.responsable_energia.login)
             elif dispositivo.id_usuario:
-                destinatarios.add(dispositivo.id_usuario.correo)
+                destinatarios.add(dispositivo.id_usuario.login)
         
         if not destinatarios:
             raise UserError(_("No se encontraron destinatarios para el reporte."))
