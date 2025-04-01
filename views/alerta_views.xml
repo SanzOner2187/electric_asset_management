@@ -1,0 +1,105 @@
+<odoo>
+    <data>
+        <!-- Vista Kanban para Alertas -->
+        <record id="view_electric_asset_management_alerta_kanban" model="ir.ui.view">
+            <field name="name">electric.asset.management.alerta.kanban</field>
+            <field name="model">electric.asset.management.alerta</field>
+            <field name="arch" type="xml">
+                <kanban class="o_kanban_mobile">
+                    <field name="id_dispositivo"/>
+                    <field name="tipo_alerta"/>
+                    <field name="fecha_hora"/>
+                    <field name="estado"/>
+                    <field name="prioridad"/>
+                    <field name="categoria"/>
+                    <field name="impacto_energetico"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div t-attf-class="oe_kanban_global_click oe_kanban_card oe_kanban_color_{{ kanban_getcolor(record.prioridad.value) }}">
+                                <div class="o_kanban_record_title">
+                                    <strong><field name="id_dispositivo"/></strong>
+                                    <span class="float-right badge" t-att-class="{
+                                        'badge-danger': record.tipo_alerta.raw_value === 'critica',
+                                        'badge-warning': record.tipo_alerta.raw_value === 'advertencia',
+                                        'badge-info': ['critica', 'advertencia'].indexOf(record.tipo_alerta.raw_value) === -1
+                                    }">
+                                        <field name="tipo_alerta"/>
+                                    </span>
+                                </div>
+                                <div>
+                                    <span><field name="categoria"/></span>
+                                    <span class="float-right">
+                                        <i class="fa fa-bolt" t-if="record.impacto_energetico.raw_value === 'alto'"/>
+                                        <i class="fa fa-bolt text-muted" t-if="record.impacto_energetico.raw_value === 'medio'"/>
+                                        <i class="fa fa-bolt text-light" t-if="record.impacto_energetico.raw_value === 'bajo'"/>
+                                    </span>
+                                </div>
+                                <div>
+                                    <span>Prioridad: <field name="prioridad"/></span>
+                                    <span class="float-right">Estado: <field name="estado"/></span>
+                                </div>
+                                <div t-if="record.descripcion.value">
+                                    <small><field name="descripcion"/></small>
+                                </div>
+                                <div class="text-right">
+                                    <small><field name="fecha_hora"/></small>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+        <!-- Vista Formulario para Alertas -->
+        <record id="view_electric_asset_management_alerta_form" model="ir.ui.view">
+            <field name="name">electric.asset.management.alerta.form</field>
+            <field name="model">electric.asset.management.alerta</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_resolver_alerta" type="object" class="oe_stat_button" icon="fa-check" attrs="{'invisible': [('estado','=','resuelta')]}">
+                                <div>Resolver</div>
+                            </button>
+                            <button name="action_generar_reporte" type="object" class="oe_stat_button" icon="fa-file-text">
+                                <div>Generar Reporte</div>
+                            </button>
+                        </div>
+                        <group>
+                            <field name="id_dispositivo"/>
+                            <field name="tipo_alerta"/>
+                            <field name="categoria"/>
+                            <field name="impacto_energetico"/>
+                            <field name="prioridad"/>
+                            <field name="fecha_hora"/>
+                            <field name="estado"/>
+                        </group>
+                        <group string="Descripción">
+                            <field name="descripcion"/>
+                        </group>
+                        <group string="Gestión">
+                            <field name="responsable"/>
+                            <field name="acciones_tomadas"/>
+                            <field name="fecha_resolucion" attrs="{'readonly': [('estado','!=','resuelta')]}"/>
+                        </group>
+                        <notebook>
+                            <page string="Recomendaciones ISO 50001">
+                                <field name="recomendaciones" readonly="1"/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Acción y Menú para Alertas -->
+        <record id="action_electric_asset_management_alerta" model="ir.actions.act_window">
+            <field name="name">Alertas sobre el consumo de energia</field>
+            <field name="res_model">electric.asset.management.alerta</field>
+            <field name="view_mode">kanban,form</field>
+            <field name="context">{'search_default_pendiente': 1}</field>
+        </record>
+        <menuitem id="menu_electric_asset_management_alerta" name="Alertas" parent="menu_electric_asset_management_root" action="action_electric_asset_management_alerta"/>
+    </data>
+</odoo>

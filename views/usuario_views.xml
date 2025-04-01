@@ -1,0 +1,50 @@
+<odoo>
+    <data>
+        <!-- Vista de Usuarios (Tree) -->
+        <record id="view_electric_asset_management_usuario_tree" model="ir.ui.view">
+            <field name="name">electric.asset.management.usuario.tree</field>
+            <field name="model">electric.asset.management.usuario</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="user_id"/>
+                    <field name="login"/>
+                    <field name="rol"/>
+                    <field name="es_auditor_energia" widget="boolean_button"/>
+                    <field name="area_responsable"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Vista de Usuarios (Form) -->
+        <record id="view_electric_asset_management_usuario_form" model="ir.ui.view">
+            <field name="name">electric.asset.management.usuario.form</field>
+            <field name="model">electric.asset.management.usuario</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="user_id"/>
+                            <field name="login"/>
+                            <field name="rol"/>
+                            <field name="password" password="True"/>
+                        </group>
+                        <group string="Certificaciones ISO 50001">
+                            <field name="es_auditor_energia"/>
+                            <field name="certificaciones"/>
+                            <field name="fecha_ultimo_entrenamiento"/>
+                            <field name="area_responsable"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Acción y Menú para Usuarios -->
+        <record id="action_electric_asset_management_usuario" model="ir.actions.act_window">
+            <field name="name">Usuarios del Sistema</field>
+            <field name="res_model">electric.asset.management.usuario</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem id="menu_electric_asset_management_usuario" name="Usuarios" parent="menu_electric_asset_management_root" action="action_electric_asset_management_usuario"/>
+    </data>
+</odoo>

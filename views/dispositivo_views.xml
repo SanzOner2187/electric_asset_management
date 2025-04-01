@@ -1,0 +1,106 @@
+<odoo>
+    <data>
+        <!-- Vista de Dispositivos (Tree) -->
+        <record id="view_electric_asset_management_dispositivo_tree" model="ir.ui.view">
+            <field name="name">electric.asset.management.dispositivo.tree</field>
+            <field name="model">electric.asset.management.dispositivo</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="tipo"/>
+                    <field name="id_zona"/>
+                    <field name="consumo_energetico"/>
+                    <field name="consumo_mensual_kwh"/>
+                    <field name="etiqueta_eficiencia"/>
+                    <field name="eficiencia_operativa" widget="progressbar"/>
+                    <field name="es_equipo_critico" widget="boolean_button"/>
+                    <field name="estado"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Vista de Dispositivos (Form) -->
+        <record id="view_electric_asset_management_dispositivo_form" model="ir.ui.view">
+            <field name="name">electric.asset.management.dispositivo.form</field>
+            <field name="model">electric.asset.management.dispositivo</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_generar_reporte_eficiencia" type="object" class="oe_stat_button" icon="fa-file-text">
+                                <div>Reporte Eficiencia</div>
+                            </button>
+                        </div>
+                        <group string="Información General">
+                            <field name="name"/>
+                            <field name="tipo"/>
+                            <field name="marca"/>
+                            <field name="modelo"/>
+                            <field name="numero_serie"/>
+                            <field name="id_zona"/>
+                            <field name="estado"/>
+                            <field name="fecha_registro"/>
+                            <field name="vida_util_estimada"/>
+                            <field name="etiqueta_eficiencia"/>
+                            <field name="es_equipo_critico"/>
+                        </group>
+                        <group string="Responsable">
+                            <field name="id_usuario"/>
+                            <field name="contacto_responsable"/> 
+                        </group>
+                        <group string="Consumo Energético">
+                            <field name="consumo_energetico"/>
+                            <field name="umbral_alerta_consumo"/>
+                            <field name="horas_uso_diario"/>
+                            <field name="dias_uso_semana"/>
+                            <field name="consumo_diario_kwh" readonly="1"/>
+                            <field name="consumo_mensual_kwh" readonly="1"/>
+                            <field name="costo_kwh"/>
+                            <field name="costo_diario" readonly="1"/>
+                            <field name="costo_mensual" readonly="1"/>
+                            <field name="modo_bajo_consumo"/>
+                            <field name="potencia_bajo_consumo"/>
+                        </group>
+                        <group string="Mantenimiento">
+                            <field name="fecha_ultima_revision"/>
+                            <field name="fuente_alimentacion"/>
+                            <field name="fecha_calibracion"/>
+                            <field name="proxima_calibracion"/>
+                        </group>
+                        <notebook>
+                            <page string="Indicadores ISO 50001">
+                                <group>
+                                    <field name="eficiencia_operativa" widget="progressbar"/>
+                                    <field name="enpi"/>
+                                </group>
+                                <group string="Oportunidades de Mejora">
+                                    <field name="oportunidades_mejora" readonly="1"/>
+                                </group>
+                            </page>
+                            <page string="Histórico de Mediciones">
+                                <field name="medicion_ids" context="{'default_id_dispositivo': id}">
+                                    <tree>
+                                        <field name="fecha_hora"/>
+                                        <field name="consumo"/>
+                                        <field name="es_medicion_atipica" widget="boolean_button"/>
+                                        <field name="desviacion_estandar"/>
+                                        <field name="temperatura_ambiente"/>
+                                        <field name="humedad_relativa"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Acción y Menú para Dispositivos -->
+        <record id="action_electric_asset_management_dispositivo" model="ir.actions.act_window">
+            <field name="name">Todos los dispositivos en la empresa</field>
+            <field name="res_model">electric.asset.management.dispositivo</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem id="menu_electric_asset_management_dispositivo" name="Dispositivos" parent="menu_electric_asset_management_root" action="action_electric_asset_management_dispositivo"/>
+    </data>
+</odoo>

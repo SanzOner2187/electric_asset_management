@@ -1,0 +1,53 @@
+<odoo>
+    <data>
+        <!-- Vista de Mediciones (Tree) -->
+        <record id="view_electric_asset_management_medicion_tree" model="ir.ui.view">
+            <field name="name">electric.asset.management.medicion.tree</field>
+            <field name="model">electric.asset.management.medicion</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="id_dispositivo"/>
+                    <field name="fecha_hora"/>
+                    <field name="consumo"/>
+                    <field name="es_medicion_atipica" widget="boolean_button"/>
+                    <field name="desviacion_estandar"/>
+                    <field name="temperatura_ambiente"/>
+                    <field name="humedad_relativa"/>
+                    <field name="estado_dispositivo"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Vista de Mediciones (Form) -->
+        <record id="view_electric_asset_management_medicion_form" model="ir.ui.view">
+            <field name="name">electric.asset.management.medicion.form</field>
+            <field name="model">electric.asset.management.medicion</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="id_dispositivo"/>
+                            <field name="fecha_hora"/>
+                            <field name="consumo"/>
+                            <field name="es_medicion_atipica" readonly="1"/>
+                            <field name="desviacion_estandar" readonly="1"/>
+                            <field name="temperatura_ambiente"/>
+                            <field name="humedad_relativa"/>
+                            <field name="factor_potencia"/>
+                            <field name="estado_dispositivo"/>
+                            <field name="observaciones"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Acción y Menú para Mediciones -->
+        <record id="action_electric_asset_management_medicion" model="ir.actions.act_window">
+            <field name="name">Mediciones para llevar control de los dispositivos</field>
+            <field name="res_model">electric.asset.management.medicion</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem id="menu_electric_asset_management_medicion" name="Mediciones" parent="menu_electric_asset_management_root" action="action_electric_asset_management_medicion"/>
+    </data>
+</odoo>
