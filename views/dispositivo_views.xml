@@ -5,12 +5,15 @@
             <field name="name">electric.asset.management.dispositivo.tree</field>
             <field name="model">electric.asset.management.dispositivo</field>
             <field name="arch" type="xml">
-                <tree>
+                <tree decoration-info="estado == 'buenas_condiciones'" 
+                      decoration-warning="estado in ('aceptable', 'necesita_revision')" 
+                      decoration-danger="estado in ('necesita_reparacion', 'dado_de_baja')">
                     <field name="name"/>
                     <field name="tipo"/>
                     <field name="id_zona"/>
                     <field name="consumo_energetico"/>
                     <field name="consumo_mensual_kwh"/>
+                    <field name="costo_mensual" widget="monetary"/>
                     <field name="etiqueta_eficiencia"/>
                     <field name="eficiencia_operativa" widget="progressbar"/>
                     <field name="es_equipo_critico" widget="boolean_button"/>
@@ -25,48 +28,70 @@
             <field name="model">electric.asset.management.dispositivo</field>
             <field name="arch" type="xml">
                 <form>
+                    <header>
+                        <!-- Botones principales -->
+                        <button name="action_generar_reporte_eficiencia" type="object" class="btn-primary" string="Generar Reporte de Eficiencia" icon="fa-file-text"/>
+                        <button name="action_generar_alerta_consumo" type="object" class="btn-secondary" string="Generar Alerta" icon="fa-exclamation-triangle"
+                                attrs="{'invisible': [('umbral_alerta_consumo', '=', 0)]}"/>
+                    </header>
                     <sheet>
-                        <div class="oe_button_box" name="button_box">
-                            <button name="action_generar_reporte_eficiencia" type="object" class="oe_stat_button" icon="fa-file-text">
-                                <div>Reporte Eficiencia</div>
-                            </button>
-                        </div>
+                        <!-- Información General -->
                         <group string="Información General">
-                            <field name="name"/>
-                            <field name="tipo"/>
-                            <field name="marca"/>
-                            <field name="modelo"/>
-                            <field name="numero_serie"/>
-                            <field name="id_zona"/>
-                            <field name="estado"/>
-                            <field name="fecha_registro"/>
-                            <field name="vida_util_estimada"/>
-                            <field name="etiqueta_eficiencia"/>
-                            <field name="es_equipo_critico"/>
+                            <group>
+                                <field name="name" required="1"/>
+                                <field name="tipo" required="1"/>
+                                <field name="marca"/>
+                                <field name="modelo"/>
+                                <field name="numero_serie"/>
+                                <field name="id_zona"/>
+                            </group>
+                            <group>
+                                <field name="fecha_registro" readonly="1"/>
+                                <field name="vida_util_estimada"/>
+                                <field name="etiqueta_eficiencia"/>
+                                <field name="es_equipo_critico" widget="boolean_button"/>
+                                <field name="estado" readonly="1"/>
+                            </group>
                         </group>
+
+                        <!-- Responsable -->
                         <group string="Responsable">
-                            <field name="id_usuario"/>
-                            <field name="contacto_responsable"/> 
+                            <field name="id_usuario" required="1"/>
+                            <field name="contacto_responsable" placeholder="Ingrese el contacto del responsable" readonly="1"/>
                         </group>
+
+                        <!-- Consumo Energético -->
                         <group string="Consumo Energético">
-                            <field name="consumo_energetico"/>
-                            <field name="umbral_alerta_consumo"/>
-                            <field name="horas_uso_diario"/>
-                            <field name="dias_uso_semana"/>
-                            <field name="consumo_diario_kwh" readonly="1"/>
-                            <field name="consumo_mensual_kwh" readonly="1"/>
-                            <field name="costo_kwh"/>
-                            <field name="costo_diario" readonly="1"/>
-                            <field name="costo_mensual" readonly="1"/>
-                            <field name="modo_bajo_consumo"/>
-                            <field name="potencia_bajo_consumo"/>
+                            <group>
+                                <field name="consumo_energetico" required="1"/>
+                                <field name="umbral_alerta_consumo" required="1"/>
+                                <field name="potencia_aparente_base" required="1"/>
+                                <field name="umbral_desviacion"/>
+                                <field name="horas_uso_diario" widget="float_time"/>
+                                <field name="dias_uso_semana"/>
+                            </group>
+                            <group>
+                                <field name="consumo_diario_kwh" readonly="1"/>
+                                <field name="consumo_mensual_kwh" readonly="1"/>
+                                <field name="costo_kwh"/>
+                                <field name="costo_diario" readonly="1" widget="monetary"/>
+                                <field name="costo_mensual" readonly="1" widget="monetary"/>
+                            </group>
+                            <group>
+                                <field name="modo_bajo_consumo"/>
+                                <field name="potencia_bajo_consumo"/>
+                            </group>
                         </group>
+
+                        <!-- Mantenimiento -->
                         <group string="Mantenimiento">
                             <field name="fecha_ultima_revision"/>
                             <field name="fuente_alimentacion"/>
                             <field name="fecha_calibracion"/>
                             <field name="proxima_calibracion"/>
                         </group>
+
+                        <!-- Pestañas ISO 50001 -->
                         <notebook>
                             <page string="Indicadores ISO 50001">
                                 <group>
@@ -74,7 +99,7 @@
                                     <field name="enpi"/>
                                 </group>
                                 <group string="Oportunidades de Mejora">
-                                    <field name="oportunidades_mejora" readonly="1"/>
+                                    <field name="oportunidades_mejora" readonly="1" nolabel="1" placeholder="Sin oportunidades de mejora disponibles."/>
                                 </group>
                             </page>
                             <page string="Histórico de Mediciones">
@@ -100,6 +125,7 @@
             <field name="name">Todos los dispositivos en la empresa</field>
             <field name="res_model">electric.asset.management.dispositivo</field>
             <field name="view_mode">tree,form</field>
+            <field name="context">{"search_default_group_by_estado": 1}</field>
         </record>
         <menuitem id="menu_electric_asset_management_dispositivo" name="Dispositivos" parent="menu_electric_asset_management_root" action="action_electric_asset_management_dispositivo"/>
     </data>

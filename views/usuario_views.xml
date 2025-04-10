@@ -9,8 +9,8 @@
                     <field name="user_id"/>
                     <field name="login"/>
                     <field name="rol"/>
-                    <field name="es_auditor_energia" widget="boolean_button"/>
-                    <field name="area_responsable"/>
+                    <field name="equipo_asignado" attrs="{'invisible': [('rol', '!=', 'empleado')]}"/>
+                    <field name="es_auditor_energia" attrs="{'invisible': [('rol', '!=', 'auditor')]}"/>
                 </tree>
             </field>
         </record>
@@ -26,13 +26,16 @@
                             <field name="user_id"/>
                             <field name="login"/>
                             <field name="rol"/>
-                            <field name="password" password="True"/>
                         </group>
-                        <group string="Certificaciones ISO 50001">
-                            <field name="es_auditor_energia"/>
-                            <field name="certificaciones"/>
-                            <field name="fecha_ultimo_entrenamiento"/>
-                            <field name="area_responsable"/>
+                        <group string="Información Específica por Rol">
+                            <!-- campos para empleados -->
+                            <field name="equipo_asignado" attrs="{'invisible': [('rol', '!=', 'empleado')]}"/>
+
+                            <!-- campos para auditores -->
+                            <field name="es_auditor_energia" attrs="{'invisible': [('rol', '!=', 'auditor')]}"/>
+                            <field name="certificaciones" attrs="{'invisible': [('rol', '!=', 'auditor')]}"/>
+                            <field name="fecha_ultimo_entrenamiento" attrs="{'invisible': [('rol', '!=', 'auditor')]}"/>
+                            <field name="needs_recertification" attrs="{'invisible': [('rol', '!=', 'auditor')]}" readonly="1"/>
                         </group>
                     </sheet>
                 </form>

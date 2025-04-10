@@ -5,15 +5,19 @@
             <field name="name">electric.asset.management.medicion.tree</field>
             <field name="model">electric.asset.management.medicion</field>
             <field name="arch" type="xml">
-                <tree>
-                    <field name="id_dispositivo"/>
-                    <field name="fecha_hora"/>
-                    <field name="consumo"/>
-                    <field name="es_medicion_atipica" widget="boolean_button"/>
-                    <field name="desviacion_estandar"/>
-                    <field name="temperatura_ambiente"/>
-                    <field name="humedad_relativa"/>
-                    <field name="estado_dispositivo"/>
+                <tree decoration-info="es_medicion_atipica == False" 
+                    decoration-danger="es_medicion_atipica == True"
+                    decoration-warning="estado_dispositivo == 'mantenimiento'">
+                    <field name="id_dispositivo" string="Dispositivo"/>
+                    <field name="fecha_hora" widget="date"/>
+                    <field name="consumo" string="Consumo (kWh)" optional="show"/>
+                    <field name="potencia_aparente" string="Potencia Aparente (kVA)" optional="show"/>
+                    <field name="factor_potencia" string="Factor de Potencia" optional="show"/>
+                    <field name="es_medicion_atipica" widget="boolean_toggle" string="¿Atípica?" optional="show"/>
+                    <field name="desviacion_estandar" string="Variación" optional="show"/>
+                    <field name="temperatura_ambiente" string="Temperatura (°C)" optional="show"/>
+                    <field name="humedad_relativa" string="Humedad (%)" optional="show"/>
+                    <field name="estado_dispositivo" widget="badge" string="Estado"/>
                 </tree>
             </field>
         </record>
@@ -24,19 +28,39 @@
             <field name="model">electric.asset.management.medicion</field>
             <field name="arch" type="xml">
                 <form>
+                    <header>
+                        <button name="action_generar_alerta" type="object" class="btn-primary" 
+                                string="Generar Alerta" icon="fa-bell" attrs="{'invisible': [('es_medicion_atipica', '=', False)]}"/>
+                    </header>
                     <sheet>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="id_dispositivo" string="Dispositivo" placeholder="Dispositivo para la medición."/>
+                            </h1>
+                        </div>
                         <group>
-                            <field name="id_dispositivo"/>
-                            <field name="fecha_hora"/>
-                            <field name="consumo"/>
-                            <field name="es_medicion_atipica" readonly="1"/>
-                            <field name="desviacion_estandar" readonly="1"/>
-                            <field name="temperatura_ambiente"/>
-                            <field name="humedad_relativa"/>
-                            <field name="factor_potencia"/>
-                            <field name="estado_dispositivo"/>
-                            <field name="observaciones"/>
+                            <group string="Información General">
+                                <field name="zona_id" string="Zona"  help="Zona donde se encuentra el dispositivo"/>
+                                <field name="fecha_hora" widget="datetime" readonly="1"/>
+                                <field name="consumo" string="Consumo (kWh)"/>
+                                <field name="estado_dispositivo" string="Estado"/>
+                                <field name="potencia_aparente" string="Potencia Aparente (kVA)"/>
+                                <field name="factor_potencia" readonly="1" string="Factor de Potencia"/>
+                                <field name="es_medicion_atipica" widget="toggle" readonly="1" string="¿Atípica?"/>
+                                <field name="desviacion_estandar" readonly="1" string="Variación"/>
+                            </group>
+                            <group string="Condiciones Ambientales">
+                                <field name="temperatura_ambiente" string="Temperatura (°C)"/>
+                                <field name="humedad_relativa" string="Humedad (%)"/>
+                            </group>
                         </group>
+                        <notebook>
+                            <page string="Detalles Adicionales">
+                                <group>
+                                    <field name="observaciones" placeholder="Ingrese observaciones aquí..." />
+                                </group>
+                            </page>
+                        </notebook>
                     </sheet>
                 </form>
             </field>
@@ -44,10 +68,15 @@
 
         <!-- Acción y Menú para Mediciones -->
         <record id="action_electric_asset_management_medicion" model="ir.actions.act_window">
-            <field name="name">Mediciones para llevar control de los dispositivos</field>
+            <field name="name">Mediciones de Dispositivos</field>
             <field name="res_model">electric.asset.management.medicion</field>
             <field name="view_mode">tree,form</field>
+            <field name="context">{"search_default_group_by_id_dispositivo": 1}</field>
         </record>
-        <menuitem id="menu_electric_asset_management_medicion" name="Mediciones" parent="menu_electric_asset_management_root" action="action_electric_asset_management_medicion"/>
+        <menuitem id="menu_electric_asset_management_medicion" 
+                  name="Mediciones" 
+                  parent="menu_electric_asset_management_root" 
+                  action="action_electric_asset_management_medicion"
+        />
     </data>
 </odoo>

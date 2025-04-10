@@ -5,13 +5,13 @@
             <field name="name">electric.asset.management.zona.tree</field>
             <field name="model">electric.asset.management.zona</field>
             <field name="arch" type="xml">
-                <tree>
+                <tree decoration-danger="es_area_critica" decoration-success="objetivo_reduccion > 0">
                     <field name="name"/>
                     <field name="ubicacion"/>
-                    <field name="es_area_critica" widget="boolean_button"/>
-                    <field name="intensidad_energetica"/>
-                    <field name="objetivo_reduccion"/>
-                    <field name="consumo_referencia"/>
+                    <field name="es_area_critica" widget="boolean_button" options="{'terminology': 'Estado'}"/>
+                    <field name="intensidad_energetica" string="Intensidad Energética (kWh/m²)"/>
+                    <field name="objetivo_reduccion" string="Objetivo Reducción (%)"/>
+                    <field name="consumo_referencia" string="Consumo Referencia (kWh)"/>
                 </tree>
             </field>
         </record>
@@ -23,30 +23,31 @@
             <field name="arch" type="xml">
                 <form>
                     <sheet>
-                        <div class="oe_button_box" name="button_box">
-                            <div>Reportes</div>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" placeholder="Nombre de la Zona"/>
+                            </h1>
                         </div>
+
                         <group>
-                            <field name="name"/>
-                            <field name="description"/>
-                            <field name="ubicacion"/>
-                            <field name="area_m2"/>
-                            <field name="es_area_critica"/>
+                            <group string="Información General">
+                                <field name="ubicacion" placeholder="Ejemplo: Planta Norte"/>
+                                <field name="area_m2" string="Área (m²)" help="Área de la zona para cálculos energéticos"/>
+                                <field name="es_area_critica" widget="boolean_toggle" options="{'terminology': 'Estado'}"/>
+                            </group>
+                            <group string="Gestión Energética ISO 50001">
+                                <field name="consumo_referencia" string="Consumo de Referencia (kWh)" help="Base para comparar mejoras energéticas"/>
+                                <field name="intensidad_energetica" string="Intensidad Energética (kWh/m²)" readonly="1"/>
+                                <field name="objetivo_reduccion" string="Objetivo de Reducción (%)" help="Meta de reducción energética según ISO 50001"/>
+                                <field name="responsable_energia" string="Responsable Energía"/>
+                                <field name="ultima_auditoria" string="Última Auditoría" widget="date"/>
+                                <field name="proxima_auditoria" string="Próxima Auditoría" widget="date"/>
+                            </group>
                         </group>
-                        <group string="Gestión Energética ISO 50001">
-                            <field name="consumo_referencia"/>
-                            <field name="intensidad_energetica" readonly="1"/>
-                            <field name="objetivo_reduccion"/>
-                            <field name="responsable_energia"/>
-                            <field name="ultima_auditoria"/>
-                            <field name="proxima_auditoria"/>
-                        </group>
-                        <group string="Responsables">
-                            <field name="responsable_energia"/>
-                        </group>
+
                         <notebook>
-                            <page string="Observaciones">
-                                <field name="observaciones_energia"/>
+                            <page string="Descripción y Observaciones">
+                                <field name="description" placeholder="Detalles sobre la zona..."/>
                             </page>
                         </notebook>
                     </sheet>
@@ -56,10 +57,19 @@
 
         <!-- Acción y Menú para Zonas -->
         <record id="action_electric_asset_management_zona" model="ir.actions.act_window">
-            <field name="name">Lleva control del consumo en cada zona</field>
+            <field name="name">Zonas de Gestión Energética</field>
             <field name="res_model">electric.asset.management.zona</field>
             <field name="view_mode">tree,form</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No hay zonas registradas.
+                </p>
+                <p>
+                    Cree nuevas zonas para gestionar el consumo energético según ISO 50001.
+                </p>
+            </field>
         </record>
+
         <menuitem id="menu_electric_asset_management_zona" name="Zonas" parent="menu_electric_asset_management_root" action="action_electric_asset_management_zona"/>
     </data>
 </odoo>

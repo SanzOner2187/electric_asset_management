@@ -1,80 +1,112 @@
 from odoo import models, fields, api, _
-from datetime import datetime
+from odoo.exceptions import ValidationError
 
 class Alerta(models.Model):
     _name = 'electric.asset.management.alerta'
-    _description = 'Alertas de los dispositivos'
+    _description = 'Modelo para gestionar alertas de dispositivos eléctricos'
 
-    id_dispositivo = fields.Many2one('electric.asset.management.dispositivo', string='Dispositivo')
+    # Campos principales
+    id_dispositivo = fields.Many2one('electric.asset.management.dispositivo', string='Dispositivo', required=True)
     tipo_alerta = fields.Selection([
-        ('critica', 'Crítica'),
         ('advertencia', 'Advertencia'),
-        ('informacional', 'Informacional')
+        ('manual', 'Manual')
     ], string='Tipo de Alerta', required=True)
-    descripcion = fields.Text(string='Descripción')
-    fecha_hora = fields.Datetime(string='Fecha y Hora', default=fields.Datetime.now)
+    descripcion = fields.Text(string='Descripción', required=True)
+    fecha_hora = fields.Datetime(string='Fecha y Hora', default=fields.Datetime.now, readonly=True)
     estado = fields.Selection([
         ('pendiente', 'Pendiente'),
         ('resuelta', 'Resuelta')
-    ], string='Estado de la Alerta', default='pendiente')
+    ], string='Estado de la Alerta', default='pendiente', required=True)
     prioridad = fields.Selection([
-        ('alta', 'Alta'),
+        ('baja', 'Baja'),
         ('media', 'Media'),
-        ('baja', 'Baja')
-    ], string='Prioridad', default='media')
+        ('alta', 'Alta')
+    ], string='Prioridad', default='media', required=True)
     acciones_tomadas = fields.Text(string='Acciones Tomadas')
-    responsable = fields.Many2one('electric.asset.management.usuario', string='Responsable')
-    fecha_resolucion = fields.Datetime(string='Fecha de Resolución')
-    
+    responsable = fields.Many2one('electric.asset.management.usuario', string='Responsable', required=True)
+    fecha_resolucion = fields.Datetime(string='Fecha de Resolución', readonly=True)
+    contacto_responsable = fields.Many2one('res.users', string='Contacto Responsable')
+
+    # Categoría e impacto energético
     categoria = fields.Selection([
         ('consumo', 'Exceso de Consumo'),
         ('eficiencia', 'Baja Eficiencia'),
         ('mantenimiento', 'Mantenimiento Requerido'),
         ('calibracion', 'Necesita Calibración'),
         ('seguridad', 'Problema de Seguridad')
-    ], string='Categoría')
+    ], string='Categoría', required=True)
     impacto_energetico = fields.Selection([
         ('alto', 'Alto'),
         ('medio', 'Medio'),
         ('bajo', 'Bajo')
-    ], string='Impacto Energético')
+    ], string='Impacto Energético', required=True)
+
+    # Recomendaciones calculadas
     recomendaciones = fields.Text(string='Recomendaciones', compute='_compute_recomendaciones')
-    
+
+    # Referencia a medición
+    medicion_id = fields.Many2one(
+        'electric.asset.management.medicion', 
+        string='Medición', 
+        help='Referencia a la medición asociada a esta alerta.'
+    )
+
+    # Validaciones
+    @api.constrains('fecha_hora', 'fecha_resolucion')
+    def _check_fechas(self):
+        for alerta in self:
+            if alerta.fecha_resolucion and alerta.fecha_resolucion < alerta.fecha_hora:
+                raise ValidationError(_("La fecha de resolución no puede ser anterior a la fecha de creación."))
+
     @api.depends('categoria', 'id_dispositivo')
     def _compute_recomendaciones(self):
+        """Genera recomendaciones basadas en la categoría y el dispositivo."""
         for alerta in self:
             recomendaciones = []
             if alerta.categoria == 'consumo':
-                recomendaciones.append(_("Verificar configuración del equipo."))
-                recomendaciones.append(_("Evaluar horario de uso para reducir consumo."))
+                recomendaciones.extend([
+                    _("Verificar configuración del equipo."),
+                    _("Evaluar horario de uso para reducir consumo.")
+                ])
                 if alerta.id_dispositivo and alerta.id_dispositivo.modo_bajo_consumo:
                     recomendaciones.append(_("Asegurar que el modo bajo consumo esté activado."))
             elif alerta.categoria == 'eficiencia':
-                recomendaciones.append(_("Realizar mantenimiento preventivo."))
-                recomendaciones.append(_("Verificar calibración del equipo."))
-                recomendaciones.append(_("Considerar reemplazo por modelo más eficiente."))
+                recomendaciones.extend([
+                    _("Realizar mantenimiento preventivo."),
+                    _("Verificar calibración del equipo."),
+                    _("Considerar reemplazo por modelo más eficiente.")
+                ])
             elif alerta.categoria == 'mantenimiento':
-                recomendaciones.append(_("Programar mantenimiento según manual del fabricante."))
-                recomendaciones.append(_("Verificar filtros y componentes críticos."))
+                recomendaciones.extend([
+                    _("Programar mantenimiento según manual del fabricante."),
+                    _("Verificar filtros y componentes críticos.")
+                ])
             alerta.recomendaciones = "\n".join(recomendaciones) if recomendaciones else _("No hay recomendaciones específicas.")
-    
+
+    # Acción para resolver una alerta
     def action_resolver_alerta(self):
+        """Marca la alerta como resuelta y registra la fecha de resolución."""
         self.ensure_one()
-        self.estado = 'resuelta'
-        self.fecha_resolucion = fields.Datetime.now()
+        if not self.acciones_tomadas:
+            raise ValidationError(_("Debe especificar las acciones tomadas antes de resolver la alerta."))
+        self.write({
+            'estado': 'resuelta',
+            'fecha_resolucion': fields.Datetime.now()
+        })
         if self.id_dispositivo:
             self.id_dispositivo.message_post(
-                body=_("Alerta resuelta: %s\nAcciones tomadas: %s") % (self.descripcion, self.acciones_tomadas or _("No especificado"))
+                body=_("Alerta resuelta: %s\nAcciones tomadas: %s") % (self.descripcion, self.acciones_tomadas)
             )
-        return True
-    
+
+    # Generar reporte
     def action_generar_reporte(self):
+        """Genera un reporte basado en la alerta."""
         self.ensure_one()
         reporte_vals = {
             'tipo_reporte': 'repentino',
-            'contenido': _("Reporte generado a partir de alerta:\n\nDispositivo: %s\nTipo: %s\nDescripción: %s\n\nAcciones tomadas: %s") % 
-                        (self.id_dispositivo.name if self.id_dispositivo else _("N/A"),
-                         self.tipo_alerta, self.descripcion, self.acciones_tomadas or _("Ninguna")),
+            'contenido': _("Reporte generado a partir de alerta:\n\nDispositivo: %s\nTipo: %s\nDescripción: %s\n\nAcciones tomadas: %s") %
+                         (self.id_dispositivo.name if self.id_dispositivo else _("N/A"),
+                          self.tipo_alerta, self.descripcion, self.acciones_tomadas or _("Ninguna")),
             'dispositivos_afectados': [(4, self.id_dispositivo.id)] if self.id_dispositivo else False,
             'recomendaciones': self.recomendaciones,
             'estado': 'generado'

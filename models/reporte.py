@@ -5,7 +5,7 @@ class Reporte(models.Model):
     _name = 'electric.asset.management.reporte'
     _description = 'Reportes generados por los usuarios'
 
-    id_usuario = fields.Many2one('electric.asset.management.usuario', string='Usuario')
+    user_id = fields.Many2one('electric.asset.management.usuario', string='Usuario')
     tipo_reporte = fields.Selection([
         ('semanal', 'Semanal'),
         ('mensual', 'Mensual'),
