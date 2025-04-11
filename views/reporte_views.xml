@@ -1,50 +1,89 @@
 <odoo>
     <data>
-        <!-- Vista Kanban para Reportes -->
+        <!-- Vista Kanban Optimizada -->
         <record id="view_electric_asset_management_reporte_kanban" model="ir.ui.view">
             <field name="name">electric.asset.management.reporte.kanban</field>
             <field name="model">electric.asset.management.reporte</field>
             <field name="arch" type="xml">
-                <kanban>
+                <kanban class="o_kanban_mobile">
+                    <!-- Campos necesarios para el kanban -->
                     <field name="user_id"/>
                     <field name="tipo_reporte"/>
                     <field name="fecha_generacion"/>
                     <field name="estado"/>
+                    <field name="prioridad"/>
                     <field name="periodo_inicio"/>
                     <field name="periodo_fin"/>
                     <field name="consumo_total"/>
-                    <field name="costos_asociados"/>
                     <field name="eficiencia_energetica"/>
                     <field name="objetivos_cumplidos"/>
-                    <field name="desviacion_objetivo"/>
+                    <field name="alerta_eficiencia"/>
                     <templates>
                         <t t-name="kanban-box">
-                            <div t-att-class="'oe_kanban_global_click oe_kanban_card oe_kanban_color_' + kanban_getcolor(record.tipo_reporte.value)">
-                                <div class="o_kanban_record_title">
+                            <div t-attf-class="oe_kanban_global_click oe_kanban_card oe_kanban_color_{{ kanban_getcolor(record.prioridad.value) }}"
+                                style="border-radius: 8px; padding: 10px; margin: 5px;">
+                                <!-- Título -->
+                                <div class="o_kanban_record_title d-flex justify-content-between align-items-center mb-2">
                                     <strong><field name="tipo_reporte"/></strong>
-                                    <span class="float-right badge" t-att-class="record.objetivos_cumplidos.raw_value ? 'badge-success' : 'badge-danger'">
-                                        <field name="objetivos_cumplidos" widget="boolean_button"/>
+                                    <span class="badge"
+                                        t-att-class="{
+                                            'badge-danger': record.alerta_eficiencia.raw_value === true,
+                                            'badge-warning': record.alerta_eficiencia.raw_value === false,
+                                            'badge-info': !record.alerta_eficiencia.raw_value
+                                        }">
+                                        <i class="fa fa-exclamation-circle mr-1" t-if="record.alerta_eficiencia.raw_value"></i>
+                                        <t t-if="record.alerta_eficiencia.raw_value">Alerta</t>
+                                        <t t-else="">Normal</t>
                                     </span>
                                 </div>
-                                <div>
-                                    <span>Generado por: <field name="user_id"/></span>
-                                    <span class="float-right">
-                                        <field name="fecha_generacion"/>
+
+                                <!-- Período y Consumo Total -->
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span><field name="periodo_inicio"/> - <field name="periodo_fin"/></span>
+                                    <span><strong><field name="consumo_total"/> kWh</strong></span>
+                                </div>
+
+                                <!-- Eficiencia Energética -->
+                                <div class="mb-2">
+                                    <small class="text-muted">Eficiencia:</small>
+                                    <field name="eficiencia_energetica" widget="progressbar" options="{'edit': false}" class="mt-1"/>
+                                </div>
+
+                                <!-- Prioridad y Estado -->
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span>Prioridad: 
+                                        <span t-att-class="{
+                                            'text-danger': record.prioridad.value === 'alta',
+                                            'text-warning': record.prioridad.value === 'media',
+                                            'text-info': record.prioridad.value === 'baja'
+                                        }">
+                                            <field name="prioridad"/>
+                                        </span>
+                                    </span>
+                                    <span>Estado: 
+                                        <span t-att-class="{
+                                            'text-secondary': record.estado.value === 'borrador',
+                                            'text-primary': record.estado.value === 'generado',
+                                            'text-success': record.estado.value === 'enviado'
+                                        }">
+                                            <field name="estado"/>
+                                        </span>
                                     </span>
                                 </div>
-                                <div>
-                                    <span>Período: <field name="periodo_inicio"/> a <field name="periodo_fin"/></span>
-                                </div>
-                                <div>
-                                    <span>Consumo: <field name="consumo_total"/> kWh</span>
-                                    <span class="float-right">
-                                        <field name="eficiencia_energetica" widget="progressbar" options="{'edit': false}"/>
-                                    </span>
-                                </div>
-                                <div t-if="record.desviacion_objetivo.value != 0">
-                                    <small t-att-class="record.desviacion_objetivo.raw_value > 0 ? 'text-success' : 'text-danger'">
-                                        Desviación: <field name="desviacion_objetivo"/>%
+
+                                <!-- Objetivos Cumplidos -->
+                                <div class="mb-2">
+                                    <small>
+                                        <i class="fa fa-check-circle text-success mr-1" t-if="record.objetivos_cumplidos.raw_value"></i>
+                                        <i class="fa fa-times-circle text-danger mr-1" t-else=""></i>
+                                        <t t-if="record.objetivos_cumplidos.raw_value">Objetivos cumplidos.</t>
+                                        <t t-else="">Objetivos no cumplidos.</t>
                                     </small>
+                                </div>
+
+                                <!-- Fecha de Generación -->
+                                <div class="text-right mt-2">
+                                    <small class="text-muted"><i class="fa fa-calendar-alt mr-1"></i> <field name="fecha_generacion"/></small>
                                 </div>
                             </div>
                         </t>
@@ -53,57 +92,63 @@
             </field>
         </record>
 
-        <!-- Vista Formulario para Reportes -->
+        <!-- Vista Formulario Mejorada -->
         <record id="view_electric_asset_management_reporte_form" model="ir.ui.view">
             <field name="name">electric.asset.management.reporte.form</field>
             <field name="model">electric.asset.management.reporte</field>
             <field name="arch" type="xml">
                 <form>
+                    <header>
+                        <!-- Botones de acción -->
+                        <button name="action_generar_reporte_iso50001" string="Generar ISO 50001" type="object" class="btn-primary"
+                                attrs="{'invisible': [('estado','!=','borrador')]}"/>
+                        <button name="action_enviar_reporte" string="Enviar Reporte" type="object" class="btn-secondary"
+                                attrs="{'invisible': ['|', ('estado','!=','generado'), ('contenido','=',False)]}"/>
+                        <!-- Estado del reporte -->
+                        <field name="estado" widget="statusbar" statusbar_visible="borrador,generado,enviado"/>
+                    </header>
                     <sheet>
-                        <div class="oe_button_box" name="button_box">
-                            <button name="action_generar_reporte_iso50001" type="object" class="oe_stat_button" icon="fa-file-text" attrs="{'invisible': [('estado','!=','borrador')]}">
-                                <div>Generar ISO 50001</div>
-                            </button>
-                            <button name="action_enviar_reporte" type="object" class="oe_stat_button" icon="fa-send" attrs="{'invisible': [('estado','!=','generado')]}">
-                                <div>Enviar</div>
-                            </button>
+                        <div class="oe_title">
+                            <h1>Reporte de Energía</h1>
                         </div>
                         <group>
-                            <field name="user_id"/>
-                            <field name="tipo_reporte"/>
-                            <field name="fecha_generacion"/>
-                            <field name="periodo_inicio"/>
-                            <field name="periodo_fin"/>
-                            <field name="estado"/>
-                        </group>
-                        <group string="Dispositivos Incluidos">
-                            <field name="dispositivos_afectados" widget="many2many_tags"/>
-                        </group>
-                        <group string="Métricas Energéticas">
-                            <field name="consumo_total"/>
-                            <field name="costos_asociados"/>
-                            <field name="eficiencia_energetica" widget="progressbar"/>
-                            <field name="enpi_promedio"/>
-                            <field name="objetivos_cumplidos"/>
-                            <field name="desviacion_objetivo"/>
+                            <group string="Información General">
+                                <field name="user_id" string="Usuario"/>
+                                <field name="tipo_reporte" placeholder="Seleccione el tipo de reporte"/>
+                                <field name="prioridad" placeholder="Seleccione la prioridad"/>
+                                <field name="fecha_generacion" string="Fecha de Generación"/>
+                                <field name="periodo_inicio" string="Inicio del Período"/>
+                                <field name="periodo_fin" string="Fin del Período"/>
+                                <field name="politica_energetica" placeholder="Describa la política energética aplicable."/>
+                            </group>
+                            <group string="Métricas Clave">
+                                <field name="consumo_total" string="Consumo Total (kWh)"/>
+                                <field name="costos_asociados" string="Costos Asociados"/>
+                                <field name="eficiencia_energetica" string="Eficiencia Energética (%)" widget="progressbar"/>
+                                <field name="enpi_promedio" string="EnPI Promedio"/>
+                                <field name="objetivos_cumplidos" string="Objetivos Cumplidos"/>
+                                <field name="desviacion_objetivo" string="Desviación del Objetivo (%)"/>
+                            </group>
                         </group>
                         <notebook>
-                            <page string="Contenido">
-                                <field name="contenido"/>
+                            <page string="Dispositivos Afectados">
+                                <field name="dispositivos_afectados" widget="many2many_tags" placeholder="Seleccione los dispositivos afectados"/>
                             </page>
                             <page string="Análisis ISO 50001">
-                                <field name="areas_mejora"/>
-                                <field name="recomendaciones"/>
-                                <field name="acciones_correctivas"/>
-                                <field name="seguimiento_requerido"/>
+                                <field name="areas_mejora" string="Áreas de Mejora"/>
+                                <field name="recomendaciones" string="Recomendaciones" placeholder="Ingrese recomendaciones aquí."/>
+                                <field name="acciones_correctivas" string="Acciones Correctivas Propuestas" placeholder="Ingrese acciones correctivas aquí."/>
+                                <field name="seguimiento_requerido" string="Requiere Seguimiento" placeholder="Ingrese si el dipositivo nececita seguimiento requerido aquí."/>
+                            </page>
+                            <page string="Contenido del Reporte">
+                                <field name="contenido" string="Contenido" placeholder="Ingrese el contenido del reporte aquí."/>
                             </page>
                         </notebook>
                     </sheet>
                 </form>
             </field>
         </record>
-
-        <!-- Acción y Menú para Reportes -->
+        <!-- accion y menu para reportes -->
         <record id="action_electric_asset_management_reporte" model="ir.actions.act_window">
             <field name="name">Reportes sobre energia</field>
             <field name="res_model">electric.asset.management.reporte</field>

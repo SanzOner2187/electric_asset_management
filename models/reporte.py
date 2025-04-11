@@ -1,5 +1,6 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
+from datetime import datetime, timedelta
 
 class Reporte(models.Model):
     _name = 'electric.asset.management.reporte'
@@ -13,8 +14,13 @@ class Reporte(models.Model):
         ('auditoria', 'Auditoría'),
         ('cumplimiento', 'Cumplimiento')
     ], string='Tipo de Reporte', required=True)
+    prioridad = fields.Selection([
+        ('baja', 'Baja'),
+        ('media', 'Media'),
+        ('alta', 'Alta')
+    ], string='Prioridad', default='media', required=True)
     fecha_generacion = fields.Datetime(string='Fecha de Generación', default=fields.Datetime.now)
-    contenido = fields.Text(string='Contenido')
+    contenido = fields.Text(string='Contenido', required=True)
     periodo_inicio = fields.Datetime(string='Inicio del Período')
     periodo_fin = fields.Datetime(string='Fin del Período')
     
@@ -23,62 +29,89 @@ class Reporte(models.Model):
         relation='reporte_dispositivo_rel',
         column1='reporte_id',
         column2='dispositivo_id',
-        string='Dispositivos Afectados'
+        string='Dispositivos Afectados',
+        required=True
     )
     
-    consumo_total = fields.Float(string='Consumo Total (kWh)')
-    costos_asociados = fields.Float(string='Costos Asociados')
-    eficiencia_energetica = fields.Float(string='Eficiencia Energética (%)')
-    recomendaciones = fields.Text(string='Recomendaciones')
+    consumo_total = fields.Float(string='Consumo Total (kWh)', required=True)
+    costos_asociados = fields.Float(string='Costos Asociados', required=True)
+    eficiencia_energetica = fields.Float(string='Eficiencia Energética (%)', required=True)
+    recomendaciones = fields.Text(string='Recomendaciones', required=True)
     estado = fields.Selection([
         ('borrador', 'Borrador'),
         ('generado', 'Generado'),
         ('enviado', 'Enviado')
     ], string='Estado del Reporte', default='borrador')
-    
+
     objetivos_cumplidos = fields.Boolean(string='Objetivos Cumplidos', compute='_compute_objetivos_cumplidos')
     desviacion_objetivo = fields.Float(string='Desviación del Objetivo (%)', compute='_compute_desviacion_objetivo')
     enpi_promedio = fields.Float(string='EnPI Promedio', compute='_compute_enpi_promedio')
     areas_mejora = fields.Text(string='Áreas de Mejora', compute='_compute_areas_mejora')
     acciones_correctivas = fields.Text(string='Acciones Correctivas Propuestas')
     seguimiento_requerido = fields.Boolean(string='Requiere Seguimiento')
-    
+
+    # Nuevos campos para cumplir con ISO 50001 y mejorar el dashboard
+    politica_energetica = fields.Text(string='Política Energética', help="Describa la política energética aplicable a este reporte.")
+    resumen_dashboard = fields.Text(string='Resumen para Dashboard', compute='_compute_resumen_dashboard', store=True)
+    alerta_eficiencia = fields.Boolean(string='Alerta de Eficiencia', compute='_compute_alerta_eficiencia')
+
+    # Validación de fechas
+    @api.constrains('periodo_inicio', 'periodo_fin')
+    def _check_periodo_fechas(self):
+        for reporte in self:
+            if reporte.periodo_inicio and reporte.periodo_fin:
+                if reporte.periodo_inicio >= reporte.periodo_fin:
+                    raise UserError(_("La fecha de inicio debe ser anterior a la fecha de fin."))
+    # Validación de dispositivos afectados
+    @api.constrains('dispositivos_afectados')
+    def _check_dispositivos_zona(self):
+        for reporte in self:
+            zonas = {dispositivo.id_zona for dispositivo in reporte.dispositivos_afectados if dispositivo.id_zona}
+            if len(zonas) > 1:
+                raise UserError(_("Todos los dispositivos afectados deben pertenecer a la misma zona."))
+
+    # Cálculo centralizado del consumo de referencia
+    def _calcular_consumo_referencia(self):
+        self.ensure_one()
+        # Convertir los valores de los campos a objetos datetime
+        periodo_inicio_dt = fields.Datetime.to_datetime(self.periodo_inicio)
+        periodo_fin_dt = fields.Datetime.to_datetime(self.periodo_fin)
+
+        # Calcular la diferencia en días
+        if periodo_inicio_dt and periodo_fin_dt:
+            diferencia_dias = (periodo_fin_dt - periodo_inicio_dt).days
+            return sum(
+                dispositivo.consumo_mensual_kwh * 
+                (diferencia_dias / 30)  # Suponiendo un mes promedio de 30 días
+                for dispositivo in self.dispositivos_afectados
+            )
+        return 0.0
+
+    # Computar si se cumplieron los objetivos
     @api.depends('consumo_total', 'dispositivos_afectados', 'periodo_inicio', 'periodo_fin')
     def _compute_objetivos_cumplidos(self):
         for reporte in self:
-            if reporte.dispositivos_afectados and reporte.periodo_inicio and reporte.periodo_fin:
-                consumo_referencia = sum(
-                    dispositivo.consumo_mensual_kwh * 
-                    ((reporte.periodo_fin - reporte.periodo_inicio).days / 30)
-                    for dispositivo in reporte.dispositivos_afectados
-                )
-                if consumo_referencia > 0:
-                    reduccion = 100 * (1 - (reporte.consumo_total / consumo_referencia))
-                    objetivo_zona = reporte.dispositivos_afectados[0].id_zona.objetivo_reduccion if reporte.dispositivos_afectados[0].id_zona else 0
-                    reporte.objetivos_cumplidos = reduccion >= objetivo_zona
-                else:
-                    reporte.objetivos_cumplidos = False
+            consumo_referencia = reporte._calcular_consumo_referencia()
+            if consumo_referencia > 0:
+                reduccion = 100 * (1 - (reporte.consumo_total / consumo_referencia))
+                objetivo_zona = reporte.dispositivos_afectados[0].id_zona.objetivo_reduccion if reporte.dispositivos_afectados[0].id_zona else 0
+                reporte.objetivos_cumplidos = reduccion >= objetivo_zona
             else:
                 reporte.objetivos_cumplidos = False
-    
+
+    # Computar la desviación del objetivo
     @api.depends('consumo_total', 'dispositivos_afectados', 'periodo_inicio', 'periodo_fin')
     def _compute_desviacion_objetivo(self):
         for reporte in self:
-            if reporte.dispositivos_afectados and reporte.periodo_inicio and reporte.periodo_fin:
-                consumo_referencia = sum(
-                    dispositivo.consumo_mensual_kwh * 
-                    ((reporte.periodo_fin - reporte.periodo_inicio).days / 30)
-                    for dispositivo in reporte.dispositivos_afectados
-                )
-                if consumo_referencia > 0:
-                    reduccion = 100 * (1 - (reporte.consumo_total / consumo_referencia))
-                    objetivo_zona = reporte.dispositivos_afectados[0].id_zona.objetivo_reduccion if reporte.dispositivos_afectados[0].id_zona else 0
-                    reporte.desviacion_objetivo = reduccion - objetivo_zona
-                else:
-                    reporte.desviacion_objetivo = 0.0
+            consumo_referencia = reporte._calcular_consumo_referencia()
+            if consumo_referencia > 0:
+                reduccion = 100 * (1 - (reporte.consumo_total / consumo_referencia))
+                objetivo_zona = reporte.dispositivos_afectados[0].id_zona.objetivo_reduccion if reporte.dispositivos_afectados[0].id_zona else 0
+                reporte.desviacion_objetivo = reduccion - objetivo_zona
             else:
                 reporte.desviacion_objetivo = 0.0
-    
+
+    # Computar el EnPI promedio
     @api.depends('dispositivos_afectados')
     def _compute_enpi_promedio(self):
         for reporte in self:
@@ -86,7 +119,8 @@ class Reporte(models.Model):
                 reporte.enpi_promedio = sum(dispositivo.enpi for dispositivo in reporte.dispositivos_afectados) / len(reporte.dispositivos_afectados)
             else:
                 reporte.enpi_promedio = 0.0
-    
+
+    # Computar áreas de mejora
     @api.depends('dispositivos_afectados', 'objetivos_cumplidos')
     def _compute_areas_mejora(self):
         for reporte in self:
@@ -99,17 +133,29 @@ class Reporte(models.Model):
                 if dispositivo.etiqueta_eficiencia in ['c', 'd']:
                     areas.add(_("Actualización de equipos con etiqueta baja (%s)") % dispositivo.name)
             reporte.areas_mejora = "\n".join(areas) if areas else _("No se identificaron áreas críticas de mejora.")
-    
+
+    # Computar resumen para el dashboard
+    @api.depends('consumo_total', 'eficiencia_energetica', 'objetivos_cumplidos')
+    def _compute_resumen_dashboard(self):
+        for reporte in self:
+            resumen = f"Consumo: {reporte.consumo_total} kWh | Eficiencia: {reporte.eficiencia_energetica}%"
+            if not reporte.objetivos_cumplidos:
+                resumen += " ⚠️ Objetivo no cumplido"
+            reporte.resumen_dashboard = resumen
+
+    # Computar alerta de eficiencia
+    @api.depends('eficiencia_energetica')
+    def _compute_alerta_eficiencia(self):
+        for reporte in self:
+            reporte.alerta_eficiencia = reporte.eficiencia_energetica < 75.0
+
+    # Acción para generar un reporte ISO 50001
     def action_generar_reporte_iso50001(self):
         self.ensure_one()
         if not self.dispositivos_afectados:
             raise UserError(_("Se deben seleccionar dispositivos afectados para generar el reporte ISO 50001."))
         zonas = {dispositivo.id_zona for dispositivo in self.dispositivos_afectados if dispositivo.id_zona}
-        consumo_referencia = sum(
-            dispositivo.consumo_mensual_kwh * 
-            ((self.periodo_fin - self.periodo_inicio).days / 30)
-            for dispositivo in self.dispositivos_afectados
-        )
+        consumo_referencia = self._calcular_consumo_referencia()
         reduccion = 100 * (1 - (self.consumo_total / consumo_referencia)) if consumo_referencia > 0 else 0
         contenido = _("REPORTE DE DESEMPEÑO ENERGÉTICO ISO 50001\n\n")
         contenido += _("Período: %s a %s\n") % (self.periodo_inicio, self.periodo_fin)
@@ -134,7 +180,8 @@ class Reporte(models.Model):
             'tipo_reporte': 'auditoria'
         })
         return True
-    
+
+    # Acción para enviar el reporte
     def action_enviar_reporte(self):
         self.ensure_one()
         if self.estado != 'generado':
