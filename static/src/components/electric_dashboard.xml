@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <t t-name="owl.OwlElectricDashboard" owl="1">
+            <div class="vh-10 overflow-auto bg-muted">
+                <div class="row m-3">
+                    <div class="col-lg-7">
+                        <div class="row">
+                            <div class="col m-0 p-0">
+                                <div class="shadow-sm border m-2 p-4 bg-white">
+                                    <div class="d-flex align-items-center justify-content between">
+                                        <h1 class="text-primary fw-bold">Panel de control de energia</h1>
+                                        <div>
+                                            <select class="form-select">
+                                                <option value="0">Seleciona el periodo</option>
+                                                <option value="7">Ultimos 7 dias</option>
+                                                <option value="15">Ultimos 15 dias</option>
+                                                <option value="30">Ultimos 30 dias</option>
+                                                <option value="90">Ultimos 90 dias</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <KpiCard name="'Consumo energetico'" value="100" percentage="6"/>
+                            <KpiCard name="'Alertas pendientes'" value="20" percentage="20"/>
+                            <KpiCard name="'Zonas Criticas'" value="5" percentage="4"/>
+                            <KpiCard name="'Consumo mensual'" value="'2.5k'" percentage="6"/>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-6 m-0 p-0">
+                                <div class="shadow-sm border m-2 p-4 bg-white">
+                                    <div class="d-flex align-items-center justify-content between">
+                                        <h3 class="text-primary fw-bold">Equipos Criticos </h3>
+                                        <div class="px-3 py-1 bg-primary cursor-pointer">
+                                            <span class="fa fa-arrow-right text-white"/>
+                                        </div>
+                                    </div>
+                                    <ChartComponent type="'doughnut'" title="'Equipos Reportados en mal estado'"/>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 m-0 p-0">
+                                <div class="shadow-sm border m-2 p-4 bg-white">
+                                    <div class="d-flex align-items-center justify-content between">
+                                        <h3 class="text-primary fw-bold">Equipos con baja potencia </h3>
+                                        <div class="px-3 py-1 bg-primary cursor-pointer">
+                                            <span class="fa fa-arrow-right text-white"/>
+                                        </div>
+                                    </div>
+                                    <ChartComponent type="'pie'" title="'Equipos con la función de baja potencia'"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-5">
+                        <div class="row">
+                            <div class="col m-0 p-0">
+                                <div class="shadow-sm border m-2 p-4 bg-white">
+                                    <div class="d-flex align-items-center justify-content between">
+                                        <h3 class="text-primary fw-bold">Medicones realizadas</h3>
+                                        <div class="px-3 py-1 bg-primary cursor-pointer">
+                                            <span class="fa fa-arrow-right text-white"/>
+                                        </div>
+                                    </div>
+                                    <ChartComponent type="'bar'" title="'Mediciones de auditorias realizadas'"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col m-0 p-0">
+                                <div class="shadow-sm border m-2 p-4 bg-white">
+                                    <div class="d-flex align-items-center justify-content between">
+                                        <h3 class="text-primary fw-bold">Reportes enviados</h3>
+                                        <div class="px-3 py-1 bg-primary cursor-pointer">
+                                            <span class="fa fa-arrow-right text-white"/>
+                                        </div>
+                                    </div>
+                                    <ChartComponent type="'line'" title="'Reportes de cumplimiento enviados'"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </t>
+</templates>

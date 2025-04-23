@@ -119,3 +119,53 @@ class Alerta(models.Model):
             'target': 'new',
             'context': {'default_' + key: val for key, val in reporte_vals.items()}
         }
+    
+    # metodo para extraer datos para el dashboard
+    def data_alerta_dashboard(self):
+        """
+        Método para extraer datos clave del modelo Alerta para mostrar en un dashboard.
+        """
+        # obtener las alertas
+        alertas = self.env['electric.asset.management.alerta'].search([])
+
+        # datos para kpis
+        total_alertas = len(alertas)
+        alertas_pendientes = len(alertas.filtered(lambda a: a.estado == 'pendiente'))
+        alertas_resueltas = len(alertas.filtered(lambda a: a.estado == 'resuelta'))
+
+        # datos para gráficos
+        alertas_por_prioridad = {
+            dict(alertas._fields['prioridad'].selection)[p]: len(alertas.filtered(lambda a: a.prioridad == p))
+            for p in ['baja', 'media', 'alta']
+        }
+
+        alertas_por_categoria = {
+            dict(alertas._fields['categoria'].selection)[c]: len(alertas.filtered(lambda a: a.categoria == c))
+            for c in ['consumo', 'eficiencia', 'mantenimiento', 'calibracion', 'seguridad']
+        }
+
+        # ultimas 5 alertas registradas
+        ultimas_alertas = alertas.sorted(key=lambda a: a.fecha_hora, reverse=True)[:5]
+        ultimas_alertas_data = [
+            {
+                'dispositivo': a.id_dispositivo.name or 'Sin dispositivo',
+                'tipo': dict(a._fields['tipo_alerta'].selection).get(a.tipo_alerta),
+                'estado': dict(a._fields['estado'].selection).get(a.estado),
+                'fecha': a.fecha_hora.strftime('%Y-%m-%d %H:%M:%S'),
+            }
+            for a in ultimas_alertas
+        ]
+
+        # retornar datos
+        return {
+            'kpi': {
+                'total_alertas': total_alertas,
+                'alertas_pendientes': alertas_pendientes,
+                'alertas_resueltas': alertas_resueltas,
+            },
+            'graficos': {
+                'por_prioridad': alertas_por_prioridad,
+                'por_categoria': alertas_por_categoria,
+            },
+            'ultimas_alertas': ultimas_alertas_data,
+        }

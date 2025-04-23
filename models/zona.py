@@ -5,7 +5,6 @@ from dateutil.relativedelta import relativedelta
 class Zona(models.Model):
     _name = 'electric.asset.management.zona'
     _description = 'Zonas de la empresa'
-    _inherit = ['mail.thread', 'mail.activity.mixin']  # Para seguimiento y notificaciones
     _order = 'name'  # Ordenar por nombre por defecto
 
     name = fields.Char(
@@ -130,4 +129,42 @@ class Zona(models.Model):
             'res_model': 'electric.asset.management.audit.wizard',
             'view_mode': 'form',
             'target': 'new',
+        }
+    
+
+    def data_zona_dashboard(self):
+        """
+        Método para extraer datos clave del modelo Zona para mostrar en un dashboard.
+        """
+        # traer zonas
+        zonas = self.env['electric.asset.management.zona'].search([])
+
+        # datos para kpis
+        total_zonas = len(zonas)
+        areas_criticas = len(zonas.filtered(lambda z: z.es_area_critica))
+        intensidad_energetica_promedio = sum(z.intensidad_energetica for z in zonas) / total_zonas if total_zonas > 0 else 0.0
+
+        # zonas con audotorias proximas
+        fecha_actual = fields.Date.today()
+        proximas_auditorias = zonas.filtered(lambda z: z.proxima_auditoria and z.proxima_auditoria <= fecha_actual + relativedelta(days=30))
+        zonas_proximas_auditorias = len(proximas_auditorias)
+
+        # datos para graficos
+        zonas_por_intensidad = {
+            'baja': len(zonas.filtered(lambda z: z.intensidad_energetica < 50)),
+            'media': len(zonas.filtered(lambda z: 50 <= z.intensidad_energetica < 150)),
+            'alta': len(zonas.filtered(lambda z: z.intensidad_energetica >= 150)),
+        }
+
+        # retornar datos
+        return {
+            'kpi': {
+                'total_zonas': total_zonas,
+                'areas_criticas': areas_criticas,
+                'intensidad_energetica_promedio': round(intensidad_energetica_promedio, 2),
+                'zonas_proximas_auditorias': zonas_proximas_auditorias,
+            },
+            'graficos': {
+                'por_intensidad': zonas_por_intensidad,
+            },
         }

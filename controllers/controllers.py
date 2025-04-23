@@ -1,35 +1,36 @@
-# -*- coding: utf-8 -*-
-# from odoo import http
-
-
-# class ElectricAssetManagement(http.Controller):
-#     @http.route('/electric_asset_management/electric_asset_management', auth='public')
-#     def index(self, **kw):
-#         return "Hello, world"
-
-#     @http.route('/electric_asset_management/electric_asset_management/objects', auth='public')
-#     def list(self, **kw):
-#         return http.request.render('electric_asset_management.listing', {
-#             'root': '/electric_asset_management/electric_asset_management',
-#             'objects': http.request.env['electric_asset_management.electric_asset_management'].search([]),
-#         })
-
-#     @http.route('/electric_asset_management/electric_asset_management/objects/<model("electric_asset_management.electric_asset_management"):obj>', auth='public')
-#     def object(self, obj, **kw):
-#         return http.request.render('electric_asset_management.object', {
-#             'object': obj
-#         })
-
-
 from odoo import http
 from odoo.http import request
 
-class ElectricAssetManagementController(http.Controller):
-    @http.route('/electric_asset_management/dashboard', type='http', auth='user')
-    def dashboard(self):
-        return request.render('electric_asset_management.dashboard')
+class DashboardController(http.Controller):
+    """
+    controlador para manejar las solicitudes del dashboard.
+    """
 
-class ElectricDashboard(http.Controller):
-    @http.route('/dashboard', auth='user', website=True)
-    def dashboard(self, **kwargs):
-        return http.request.render('electric_asset_management.dashboard_multi_graph')
+    @http.route('/electric_asset_management/dashboard', type='json', auth='user')
+    def get_dashboard_data(self, **kwargs):
+        """
+        ruta principal para obtener todos los datos del dashboard.
+        Retorna un diccionario con los datos de alertas, mediciones, reportes, zonas y dispositivos.
+        """
+        # obtener los datos de cada modelo de los metodos en cada uno
+        alerta_model = request.env['electric.asset.management.alerta']
+        medicion_model = request.env['electric.asset.management.medicion']
+        reporte_model = request.env['electric.asset.management.reporte']
+        zona_model = request.env['electric.asset.management.zona']
+        dispositivo_model = request.env['electric.asset.management.dispositivo']
+
+        # llamar los metodos de cada modelo para proveer datos al dashboard
+        alerta_data = alerta_model.data_alerta_dashboard()
+        medicion_data = medicion_model.data_medicion_dashboard()
+        reporte_data = reporte_model.data_reporte_dashboard()
+        zona_data = zona_model.data_zona_dashboard()
+        dispositivo_data = dispositivo_model.data_dispositivo_dashboard()
+
+        # retorna los datos en formato json
+        return {
+            'alertas': alerta_data,
+            'mediciones': medicion_data,
+            'reportes': reporte_data,
+            'zonas': zona_data,
+            'dispositivos': dispositivo_data,
+        }

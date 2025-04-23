@@ -205,3 +205,54 @@ class Reporte(models.Model):
                 'sticky': False,
             }
         }
+
+    # metodo para extraer datos para el dashboard
+    def data_reporte_dashboard(self):
+        """
+        Método para extraer datos clave del modelo Reporte para mostrar en un dashboard.
+        """
+        # traer reportes
+        reportes = self.env['electric.asset.management.reporte'].search([])
+
+        # datos para kpis
+        total_reportes = len(reportes)
+        reportes_objetivos_cumplidos = len(reportes.filtered(lambda r: r.objetivos_cumplidos))
+        promedio_eficiencia = sum(r.eficiencia_energetica for r in reportes) / total_reportes if total_reportes > 0 else 0.0
+
+        # datos para graficos
+        reportes_por_tipo = {
+            dict(reportes._fields['tipo_reporte'].selection)[tipo]: len(reportes.filtered(lambda r: r.tipo_reporte == tipo))
+            for tipo in ['semanal', 'mensual', 'repentino', 'auditoria', 'cumplimiento']
+        }
+
+        reportes_por_estado = {
+            dict(reportes._fields['estado'].selection)[estado]: len(reportes.filtered(lambda r: r.estado == estado))
+            for estado in ['borrador', 'generado', 'enviado']
+        }
+
+        # ultimos 5 reportes
+        ultimos_reportes = reportes.sorted(key=lambda r: r.fecha_generacion, reverse=True)[:5]
+        ultimos_reportes_data = [
+            {
+                'tipo': dict(r._fields['tipo_reporte'].selection).get(r.tipo_reporte),
+                'estado': dict(r._fields['estado'].selection).get(r.estado),
+                'consumo_total': r.consumo_total,
+                'eficiencia': r.eficiencia_energetica,
+                'fecha_generacion': r.fecha_generacion.strftime('%Y-%m-%d %H:%M:%S'),
+            }
+            for r in ultimos_reportes
+        ]
+
+        # retornar datos
+        return {
+            'kpi': {
+                'total_reportes': total_reportes,
+                'objetivos_cumplidos': reportes_objetivos_cumplidos,
+                'promedio_eficiencia': round(promedio_eficiencia, 2),
+            },
+            'graficos': {
+                'por_tipo': reportes_por_tipo,
+                'por_estado': reportes_por_estado,
+            },
+            'ultimos_reportes': ultimos_reportes_data,
+        }

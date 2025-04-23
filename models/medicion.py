@@ -186,3 +186,54 @@ class Medicion(models.Model):
             self.consumo = self.id_dispositivo.consumo_energetico / 1000  # Convertir de Watts a kWh
             self.potencia_aparente = self.id_dispositivo.potencia_aparente_base
 
+
+    # metodo para extraer datos para el dashboard
+    def data_medicion_dashboard(self):
+        """
+        Método para extraer datos clave del modelo Medicion para mostrar en un dashboard.
+        """
+        # obtener mediciones
+        mediciones = self.env['electric.asset.management.medicion'].search([])
+
+        # datos para kpis
+        total_mediciones = len(mediciones)
+        mediciones_atipicas = len(mediciones.filtered(lambda m: m.es_medicion_atipica))
+        consumo_promedio = sum(m.consumo for m in mediciones) / total_mediciones if total_mediciones > 0 else 0.0
+
+        # datos para graficos
+        mediciones_por_zona = {
+            zona.name: len(mediciones.filtered(lambda m: m.zona_id == zona))
+            for zona in self.env['electric.asset.management.zona'].search([])
+        }
+
+        mediciones_por_dispositivo = {
+            dispositivo.name: len(mediciones.filtered(lambda m: m.id_dispositivo == dispositivo))
+            for dispositivo in self.env['electric.asset.management.dispositivo'].search([])
+        }
+
+        # ultimas 5 medicones
+        ultimas_mediciones = mediciones.sorted(key=lambda m: m.fecha_hora, reverse=True)[:5]
+        ultimas_mediciones_data = [
+            {
+                'dispositivo': m.id_dispositivo.name or 'Sin dispositivo',
+                'zona': m.zona_id.name or 'Sin zona',
+                'consumo': m.consumo,
+                'fecha': m.fecha_hora.strftime('%Y-%m-%d %H:%M:%S'),
+                'atipica': m.es_medicion_atipica,
+            }
+            for m in ultimas_mediciones
+        ]
+
+        # retornar datos
+        return {
+            'kpi': {
+                'total_mediciones': total_mediciones,
+                'mediciones_atipicas': mediciones_atipicas,
+                'consumo_promedio': round(consumo_promedio, 2),
+            },
+            'graficos': {
+                'por_zona': mediciones_por_zona,
+                'por_dispositivo': mediciones_por_dispositivo,
+            },
+            'ultimas_mediciones': ultimas_mediciones_data,
+        }

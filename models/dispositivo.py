@@ -8,8 +8,7 @@ _logger = logging.getLogger(__name__)
 class Dispositivo(models.Model):
     _name = 'electric.asset.management.dispositivo'
     _description = 'Dispositivos de la empresa'
-    _inherit = ['mail.thread', 'mail.activity.mixin']  # Para seguimiento y notificaciones
-    _order = 'fecha_registro desc'  # Ordenar por fecha de registro
+    _order = 'fecha_registro desc' 
 
     # Campos principales
     name = fields.Char(string='Nombre', required=True, tracking=True)
@@ -201,7 +200,6 @@ class Dispositivo(models.Model):
                 _logger.error(f"Error al calcular antigüedad del equipo: {e}")
                 dispositivo.antiguedad_equipo = 0
 
-    # Relaciones y campos computados
     @api.onchange('id_usuario')
     def _onchange_id_usuario(self):
         if self.id_usuario:
@@ -209,7 +207,6 @@ class Dispositivo(models.Model):
         else:
             self.contacto_responsable = False
 
-    # Validaciones y restricciones
     @api.constrains('consumo_energetico', 'umbral_alerta_consumo', 'horas_uso_diario', 'dias_uso_semana')
     def _check_valores(self):
         for dispositivo in self:
@@ -220,19 +217,15 @@ class Dispositivo(models.Model):
 
     def action_generar_alerta_consumo(self):
         """Genera una alerta de consumo y abre un modal con los detalles."""
-        self.ensure_one()  # Asegura que el método se ejecute para un solo registro
-
+        self.ensure_one() 
         try:
-            # Validaciones previas
             if not self.umbral_alerta_consumo or self.umbral_alerta_consumo <= 0:
                 raise UserError(_("El umbral de alerta de consumo no está configurado correctamente."))
             if not self.consumo_energetico or self.consumo_energetico <= 0:
                 raise UserError(_("El consumo energético del dispositivo no está configurado correctamente."))
 
-            # Determinar el tipo de alerta
             tipo_alerta = 'critica' if self.consumo_energetico > self.umbral_alerta_consumo * 1.2 else 'advertencia'
 
-            # Crear la alerta
             alerta_vals = {
                 'id_dispositivo': self.id,
                 'tipo_alerta': tipo_alerta,
@@ -240,39 +233,33 @@ class Dispositivo(models.Model):
                             (self.name, self.consumo_energetico, self.umbral_alerta_consumo),
                 'prioridad': 'alta',
                 'responsable': self.id_usuario.id if self.id_usuario else False,
-                'estado': 'pendiente',  # Estado inicial de la alerta
-                'categoria': 'consumo',  # Categoría basada en el contexto
-                'impacto_energetico': 'alto' if tipo_alerta == 'critica' else 'medio',  # Impacto energético
+                'estado': 'pendiente', 
+                'categoria': 'consumo',  
+                'impacto_energetico': 'alto' if tipo_alerta == 'critica' else 'medio',  
             }
             alerta = self.env['electric.asset.management.alerta'].create(alerta_vals)
 
-            # Devolver acción para abrir el modal
             return {
                 'name': _('Alerta Generada'),
                 'type': 'ir.actions.act_window',
                 'res_model': 'electric.asset.management.alerta',
                 'view_mode': 'form',
-                'res_id': alerta.id,  # ID de la alerta creada
-                'target': 'new',  # Abrir como modal
+                'res_id': alerta.id, 
+                'target': 'new', 
                 'context': {'default_' + key: val for key, val in alerta_vals.items()}
             }
 
         except UserError as ue:
-            # Capturar errores específicos lanzados por validaciones
             _logger.error(f"Error al generar alerta de consumo: {ue}")
-            raise ue  # Re-lanzar el error para que el usuario lo vea
-
+            raise ue  # 
         except Exception as e:
-            # Capturar cualquier otro error inesperado
             _logger.error(f"Error inesperado al generar alerta de consumo: {e}")
             raise UserError(_("Ocurrió un error inesperado al generar la alerta. Por favor, revise los registros del sistema."))
 
     def action_generar_reporte_eficiencia(self):
         """Genera un reporte de eficiencia energética para el dispositivo y abre un modal."""
-        self.ensure_one()  # Asegura que el método se ejecute para un solo registro
-
+        self.ensure_one()  
         try:
-            # Crear los valores del reporte
             reporte_vals = {
                 'tipo_reporte': 'auditoria',
                 'contenido': _("Reporte de Eficiencia Energética para %s\n"
@@ -288,39 +275,60 @@ class Dispositivo(models.Model):
                 'estado': 'generado'
             }
 
-            # Crear el reporte en la base de datos
             reporte = self.env['electric.asset.management.reporte'].create(reporte_vals)
 
-            # Devolver acción para abrir el modal
             return {
                 'name': _('Reporte de Eficiencia Energética'),
                 'type': 'ir.actions.act_window',
                 'res_model': 'electric.asset.management.reporte',
                 'view_mode': 'form',
-                'res_id': reporte.id,  # ID del reporte creado
-                'target': 'new',  # Abrir como modal
+                'res_id': reporte.id,  
+                'target': 'new',  
                 'context': {'default_' + key: val for key, val in reporte_vals.items()}
             }
 
         except Exception as e:
-            # Capturar cualquier error inesperado
             _logger.error(f"Error inesperado al generar reporte de eficiencia: {e}")
             raise UserError(_("Ocurrió un error inesperado al generar el reporte. Por favor, revise los registros del sistema."))
 
-    # Métodos adicionales para dashboard
-    def get_dashboard_data(self):
-        """Devuelve datos para el dashboard"""
-        try:
-            dispositivos = self.search([])
-            data = {
-                'total_dispositivos': len(dispositivos),
-                'consumo_total_mensual': sum(dispositivos.mapped('consumo_mensual_kwh')),
-                'costo_total_mensual': sum(dispositivos.mapped('costo_mensual')),
-                'promedio_eficiencia_operativa': sum(dispositivos.mapped('eficiencia_operativa')) / len(dispositivos) if dispositivos else 0,
-                'equipos_criticos': len(dispositivos.filtered(lambda d: d.es_equipo_critico)),
-                'alertas_activas': self.env['electric.asset.management.alerta'].search_count([('estado', '=', 'activa')])
-            }
-            return data
-        except Exception as e:
-            _logger.error(f"Error al obtener datos del dashboard: {e}")
-            return {}
+    def data_dispositivo_dashboard(self):
+        """
+        Método para extraer datos clave del modelo Dispositivo para mostrar en un dashboard.
+        """
+        # Consulta principal para obtener todos los dispositivos
+        dispositivos = self.env['electric.asset.management.dispositivo'].search([])
+
+        # Datos para KPIs
+        equipos_criticos = len(dispositivos.filtered(lambda d: d.es_equipo_critico))
+        consumo_total_mensual = sum(dispositivos.mapped('consumo_mensual_kwh'))
+        costo_total_mensual = sum(dispositivos.mapped('costo_mensual'))
+        promedio_eficiencia_operativa = (
+            sum(dispositivos.mapped('eficiencia_operativa')) / total_dispositivos if total_dispositivos > 0 else 0
+        )
+
+        # Alertas pendientes relacionadas con dispositivos
+        alertas_pendientes = self.env['electric.asset.management.alerta'].search_count([
+            ('id_dispositivo', 'in', dispositivos.ids),
+            ('estado', '=', 'pendiente')
+        ])
+
+        # Distribución de dispositivos por estado
+        distribucion_por_estado = {
+            dict(dispositivos._fields['estado'].selection)[estado]: len(dispositivos.filtered(lambda d: d.estado == estado))
+            for estado in ['buenas_condiciones', 'aceptable', 'necesita_revision', 'necesita_reparacion', 'mantenimiento', 'dado_de_baja']
+        }
+
+
+        # Retornar datos estructurados
+        return {
+            'kpi': {
+                'equipos_criticos': equipos_criticos,
+                'consumo_total_mensual': round(consumo_total_mensual, 2),
+                'costo_total_mensual': round(costo_total_mensual, 2),
+                'promedio_eficiencia_operativa': round(promedio_eficiencia_operativa, 2),
+                'alertas_pendientes': alertas_pendientes,
+            },
+            'graficos': {
+                'por_estado': distribucion_por_estado,
+            },
+        }
