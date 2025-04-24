@@ -17,12 +17,17 @@ class Medicion(models.Model):
         required=True, 
         ondelete='cascade'
     )
-    zona_id = fields.Many2one(
+    id_zona = fields.Many2one(
         'electric.asset.management.zona',
         string = 'Zona',
         required = True,
         ondelete = 'cascade',
         help = "Zona donde se encuentra el dispositivo"
+    )
+    zona_dispositivo = fields.Char(
+        related='id_zona.name',  # Accede al nombre de la zona
+        string="Zona donde se encuentra el dispositivo",
+        readonly=True
     )
     fecha_hora = fields.Datetime(string='Fecha y Hora', required=True, default=fields.Datetime.now)
     consumo = fields.Float(string='Consumo (kWh)', required=True, help="Consumo energético en kilovatios-hora")
@@ -34,7 +39,7 @@ class Medicion(models.Model):
         readonly=True,
         help="Factor de potencia calculado automáticamente"
     )    
-    estado_dispositivo = fields.Selection(related='id_dispositivo.estado', string="Estado del Dispositivo", readonly=True)
+    estado_dispositivo = fields.Selection(related='id_dispositivo.estado', string="Estado del Dispositivo")
     observaciones = fields.Text(string='Observaciones')
 
     # Campos para cumplir con ISO 50001
@@ -90,7 +95,10 @@ class Medicion(models.Model):
 
     @api.model
     def create(self, vals):
-        """Crea una nueva medición y genera alertas si es necesario."""
+        """Sobrescribe el método create para asignar la zona automáticamente."""
+        if 'id_dispositivo' in vals and vals['id_dispositivo']:
+            dispositivo = self.env['electric.asset.management.dispositivo'].browse(vals['id_dispositivo'])
+            vals['id_zona'] = dispositivo.id_zona.id
         medicion = super(Medicion, self).create(vals)
 
         # Recalcular KPIs después de crear la medición
@@ -109,6 +117,13 @@ class Medicion(models.Model):
             self.env['electric.asset.management.alerta'].create(alerta_vals)
 
         return medicion
+
+    def write(self, vals):
+        """Sobrescribe el método write para asignar la zona automáticamente."""
+        if 'id_dispositivo' in vals and vals['id_dispositivo']:
+            dispositivo = self.env['electric.asset.management.dispositivo'].browse(vals['id_dispositivo'])
+            vals['id_zona'] = dispositivo.id_zona.id
+        return super(Medicion, self).write(vals)
 
     @api.depends('consumo', 'potencia_aparente')
     def _compute_factor_potencia(self):
@@ -181,8 +196,9 @@ class Medicion(models.Model):
                 
     @api.onchange('id_dispositivo')
     def _onchange_id_dispositivo(self):
-        """Asigna valores base desde el dispositivo seleccionado."""
+        """Actualiza la zona automáticamente al seleccionar un dispositivo."""
         if self.id_dispositivo:
+            self.id_zona = self.id_dispositivo.id_zona
             self.consumo = self.id_dispositivo.consumo_energetico / 1000  # Convertir de Watts a kWh
             self.potencia_aparente = self.id_dispositivo.potencia_aparente_base
 
@@ -202,7 +218,7 @@ class Medicion(models.Model):
 
         # datos para graficos
         mediciones_por_zona = {
-            zona.name: len(mediciones.filtered(lambda m: m.zona_id == zona))
+            zona.name: len(mediciones.filtered(lambda m: m.id_zona == zona))
             for zona in self.env['electric.asset.management.zona'].search([])
         }
 
@@ -216,7 +232,7 @@ class Medicion(models.Model):
         ultimas_mediciones_data = [
             {
                 'dispositivo': m.id_dispositivo.name or 'Sin dispositivo',
-                'zona': m.zona_id.name or 'Sin zona',
+                'zona': m.id_zona.name or 'Sin zona',
                 'consumo': m.consumo,
                 'fecha': m.fecha_hora.strftime('%Y-%m-%d %H:%M:%S'),
                 'atipica': m.es_medicion_atipica,
@@ -237,3 +253,11 @@ class Medicion(models.Model):
             },
             'ultimas_mediciones': ultimas_mediciones_data,
         }
+    
+    @api.model
+    def get_dashboard_data_medicion(self):
+        """
+        Metodo publico para hacer llamado al front end
+        este metodo actua como puente para poder acceder a los datos calculados
+        """
+        return self.data_medicion_dashboard()

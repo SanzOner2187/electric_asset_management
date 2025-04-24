@@ -6,7 +6,6 @@
             <field name="model">electric.asset.management.reporte</field>
             <field name="arch" type="xml">
                 <kanban class="o_kanban_mobile">
-                    <!-- Campos necesarios para el kanban -->
                     <field name="user_id"/>
                     <field name="tipo_reporte"/>
                     <field name="fecha_generacion"/>
@@ -20,70 +19,32 @@
                     <field name="alerta_eficiencia"/>
                     <templates>
                         <t t-name="kanban-box">
-                            <div t-attf-class="oe_kanban_global_click oe_kanban_card oe_kanban_color_{{ kanban_getcolor(record.prioridad.value) }}"
-                                style="border-radius: 8px; padding: 10px; margin: 5px;">
-                                <!-- Título -->
-                                <div class="o_kanban_record_title d-flex justify-content-between align-items-center mb-2">
+                            <div t-attf-class="oe_kanban_global_click oe_kanban_card oe_kanban_color_{{ kanban_getcolor(record.prioridad.value) }}">
+                                <div class="o_kanban_record_title d-flex justify-content-between align-items-center">
                                     <strong><field name="tipo_reporte"/></strong>
                                     <span class="badge"
-                                        t-att-class="{
-                                            'badge-danger': record.alerta_eficiencia.raw_value === true,
-                                            'badge-warning': record.alerta_eficiencia.raw_value === false,
-                                            'badge-info': !record.alerta_eficiencia.raw_value
-                                        }">
-                                        <i class="fa fa-exclamation-circle mr-1" t-if="record.alerta_eficiencia.raw_value"></i>
+                                          t-att-class="{
+                                              'badge-danger': record.alerta_eficiencia.raw_value === true,
+                                              'badge-warning': record.alerta_eficiencia.raw_value === false,
+                                              'badge-info': !record.alerta_eficiencia.raw_value
+                                          }">
                                         <t t-if="record.alerta_eficiencia.raw_value">Alerta</t>
                                         <t t-else="">Normal</t>
                                     </span>
                                 </div>
 
-                                <!-- Período y Consumo Total -->
-                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex justify-content-between align-items-center mt-2">
                                     <span><field name="periodo_inicio"/> - <field name="periodo_fin"/></span>
                                     <span><strong><field name="consumo_total"/> kWh</strong></span>
                                 </div>
 
-                                <!-- Eficiencia Energética -->
-                                <div class="mb-2">
-                                    <small class="text-muted">Eficiencia:</small>
-                                    <field name="eficiencia_energetica" widget="progressbar" options="{'edit': false}" class="mt-1"/>
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <span>Prioridad: <field name="prioridad"/></span>
+                                    <span>Estado: <field name="estado"/></span>
                                 </div>
 
-                                <!-- Prioridad y Estado -->
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span>Prioridad: 
-                                        <span t-att-class="{
-                                            'text-danger': record.prioridad.value === 'alta',
-                                            'text-warning': record.prioridad.value === 'media',
-                                            'text-info': record.prioridad.value === 'baja'
-                                        }">
-                                            <field name="prioridad"/>
-                                        </span>
-                                    </span>
-                                    <span>Estado: 
-                                        <span t-att-class="{
-                                            'text-secondary': record.estado.value === 'borrador',
-                                            'text-primary': record.estado.value === 'generado',
-                                            'text-success': record.estado.value === 'enviado'
-                                        }">
-                                            <field name="estado"/>
-                                        </span>
-                                    </span>
-                                </div>
-
-                                <!-- Objetivos Cumplidos -->
-                                <div class="mb-2">
-                                    <small>
-                                        <i class="fa fa-check-circle text-success mr-1" t-if="record.objetivos_cumplidos.raw_value"></i>
-                                        <i class="fa fa-times-circle text-danger mr-1" t-else=""></i>
-                                        <t t-if="record.objetivos_cumplidos.raw_value">Objetivos cumplidos.</t>
-                                        <t t-else="">Objetivos no cumplidos.</t>
-                                    </small>
-                                </div>
-
-                                <!-- Fecha de Generación -->
                                 <div class="text-right mt-2">
-                                    <small class="text-muted"><i class="fa fa-calendar-alt mr-1"></i> <field name="fecha_generacion"/></small>
+                                    <small class="text-muted"><field name="fecha_generacion"/></small>
                                 </div>
                             </div>
                         </t>

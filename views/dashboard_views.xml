@@ -4,12 +4,5 @@
             <field name="name">Electric Asset Management Dashboard</field>
             <field name="tag">owl.electric_dashboard</field> 
         </record>
-
-        <menuitem
-            id="menu_action_electric_asset_management_dashboard"
-            name="Dashboard"
-            parent="menu_electric_asset_management_root"
-            action="action_electric_asset_management_dashboard"
-        />
     </data>
 </odoo>

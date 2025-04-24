@@ -4,6 +4,7 @@
             id="menu_electric_asset_management_root" 
             name="Gestión de Activos Eléctricos" 
             sequence="10"
+            action="action_electric_asset_management_dashboard"
         />
     </data>
 </odoo>

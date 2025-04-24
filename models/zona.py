@@ -168,3 +168,11 @@ class Zona(models.Model):
                 'por_intensidad': zonas_por_intensidad,
             },
         }
+    
+    @api.model
+    def get_dashboard_data_zona(self):
+        """
+        Metodo publico para hacer llamado al front end
+        este metodo actua como puente para poder acceder a los datos calculados
+        """
+        return self.data_zona_dashboard()

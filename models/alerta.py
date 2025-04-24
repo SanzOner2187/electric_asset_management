@@ -169,3 +169,11 @@ class Alerta(models.Model):
             },
             'ultimas_alertas': ultimas_alertas_data,
         }
+    
+    @api.model
+    def get_dashboard_data_alerta(self):
+        """
+        Metodo publico para hacer llamado al front end
+        este metodo actua como puente para poder acceder a los datos calculados
+        """
+        return self.data_alerta_dashboard()

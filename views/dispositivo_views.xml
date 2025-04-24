@@ -50,7 +50,7 @@
                                 <field name="vida_util_estimada"/>
                                 <field name="etiqueta_eficiencia"/>
                                 <field name="es_equipo_critico" widget="boolean_button"/>
-                                <field name="estado" readonly="1"/>
+                                <field name="estado"/>
                             </group>
                         </group>
 

@@ -24,7 +24,7 @@ class Dispositivo(models.Model):
         ('necesita_reparacion', 'Necesita Reparación'),
         ('mantenimiento', 'Mantenimiento'),
         ('dado_de_baja', 'Dado de baja')
-    ], string="Estado del dispositivo", required=True, tracking=True, default='buenas_condiciones')
+    ], string="Estado del dispositivo", required=True, tracking=True)
     fecha_registro = fields.Datetime(string='Fecha de Registro', default=fields.Datetime.now, readonly=True)
     vida_util_estimada = fields.Integer(string='Vida Útil Estimada (años)', help="Vida útil estimada en años")
     cumple_estandar = fields.Boolean(string='Cumple Estándar', default=False, tracking=True)
@@ -291,6 +291,8 @@ class Dispositivo(models.Model):
             _logger.error(f"Error inesperado al generar reporte de eficiencia: {e}")
             raise UserError(_("Ocurrió un error inesperado al generar el reporte. Por favor, revise los registros del sistema."))
 
+    from odoo import models
+
     def data_dispositivo_dashboard(self):
         """
         Método para extraer datos clave del modelo Dispositivo para mostrar en un dashboard.
@@ -299,6 +301,7 @@ class Dispositivo(models.Model):
         dispositivos = self.env['electric.asset.management.dispositivo'].search([])
 
         # Datos para KPIs
+        total_dispositivos = self.env['electric.asset.management.dispositivo'].search_count([])
         equipos_criticos = len(dispositivos.filtered(lambda d: d.es_equipo_critico))
         consumo_total_mensual = sum(dispositivos.mapped('consumo_mensual_kwh'))
         costo_total_mensual = sum(dispositivos.mapped('costo_mensual'))
@@ -315,9 +318,8 @@ class Dispositivo(models.Model):
         # Distribución de dispositivos por estado
         distribucion_por_estado = {
             dict(dispositivos._fields['estado'].selection)[estado]: len(dispositivos.filtered(lambda d: d.estado == estado))
-            for estado in ['buenas_condiciones', 'aceptable', 'necesita_revision', 'necesita_reparacion', 'mantenimiento', 'dado_de_baja']
+            for estado in dict(dispositivos._fields['estado'].selection).keys()
         }
-
 
         # Retornar datos estructurados
         return {
@@ -332,3 +334,11 @@ class Dispositivo(models.Model):
                 'por_estado': distribucion_por_estado,
             },
         }
+
+    @api.model
+    def get_dashboard_data_dispositivo(self):
+        """
+        Metodo publico para hacer llamado al front end
+        este metodo actua como puente para poder acceder a los datos calculados
+        """
+        return self.data_dispositivo_dashboard()

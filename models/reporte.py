@@ -256,3 +256,11 @@ class Reporte(models.Model):
             },
             'ultimos_reportes': ultimos_reportes_data,
         }
+    
+    @api.model
+    def get_dashboard_data_reporte(self):
+        """
+        Metodo publico para hacer llamado al front end
+        este metodo actua como puente para poder acceder a los datos calculados
+        """
+        return self.data_reporte_dashboard()

@@ -9,6 +9,7 @@
                     decoration-danger="es_medicion_atipica == True"
                     decoration-warning="estado_dispositivo == 'mantenimiento'">
                     <field name="id_dispositivo" string="Dispositivo"/>
+                    <field name="zona_dispositivo" string="Zona" readonly="1" optional="show"/>
                     <field name="fecha_hora" widget="date"/>
                     <field name="consumo" string="Consumo (kWh)" optional="show"/>
                     <field name="potencia_aparente" string="Potencia Aparente (kVA)" optional="show"/>
@@ -40,15 +41,15 @@
                         </div>
                         <group>
                             <group string="Información General">
-                                <field name="zona_id" string="Zona"  help="Zona donde se encuentra el dispositivo"/>
-                                <field name="fecha_hora" widget="datetime" readonly="1"/>
-                                <field name="consumo" string="Consumo (kWh)"/>
-                                <field name="estado_dispositivo" string="Estado"/>
-                                <field name="potencia_aparente" string="Potencia Aparente (kVA)"/>
-                                <field name="factor_potencia" readonly="1" string="Factor de Potencia"/>
-                                <field name="es_medicion_atipica" widget="toggle" readonly="1" string="¿Atípica?"/>
-                                <field name="desviacion_estandar" readonly="1" string="Variación"/>
-                            </group>
+                            <field name="zona_dispositivo" string="Zona" readonly="1" help="Zona donde se encuentra el dispositivo"/>
+                            <field name="fecha_hora" widget="datetime" readonly="1"/>
+                            <field name="consumo" string="Consumo (kWh)"/>
+                            <field name="estado_dispositivo" string="Estado"/>
+                            <field name="potencia_aparente" string="Potencia Aparente (kVA)"/>
+                            <field name="factor_potencia" readonly="1" string="Factor de Potencia"/>
+                            <field name="es_medicion_atipica" widget="toggle" readonly="1" string="¿Atípica?"/>
+                            <field name="desviacion_estandar" readonly="1" string="Variación"/>
+                        </group>
                             <group string="Condiciones Ambientales">
                                 <field name="temperatura_ambiente" string="Temperatura (°C)"/>
                                 <field name="humedad_relativa" string="Humedad (%)"/>
