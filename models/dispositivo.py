@@ -1,6 +1,7 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 from datetime import datetime, timedelta
+
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -9,6 +10,7 @@ class Dispositivo(models.Model):
     _name = 'electric.asset.management.dispositivo'
     _description = 'Dispositivos de la empresa'
     _order = 'fecha_registro desc' 
+    _inherit = ['mail.thread', 'mail.activity.mixin']
 
     # Campos principales
     name = fields.Char(string='Nombre', required=True, tracking=True)
@@ -216,8 +218,8 @@ class Dispositivo(models.Model):
                 raise ValidationError(_("Las horas de uso diario y días de uso por semana no pueden ser negativos."))
 
     def action_generar_alerta_consumo(self):
-        """Genera una alerta de consumo y abre un modal con los detalles."""
-        self.ensure_one() 
+        """Genera una alerta de consumo y muestra un mensaje al usuario."""
+        self.ensure_one()
         try:
             if not self.umbral_alerta_consumo or self.umbral_alerta_consumo <= 0:
                 raise UserError(_("El umbral de alerta de consumo no está configurado correctamente."))
@@ -226,70 +228,64 @@ class Dispositivo(models.Model):
 
             tipo_alerta = 'critica' if self.consumo_energetico > self.umbral_alerta_consumo * 1.2 else 'advertencia'
 
-            alerta_vals = {
+            default_vals = {
                 'id_dispositivo': self.id,
                 'tipo_alerta': tipo_alerta,
                 'descripcion': _("El dispositivo %s está consumiendo %s W, superando el umbral de %s W") % 
-                            (self.name, self.consumo_energetico, self.umbral_alerta_consumo),
+                                (self.name, self.consumo_energetico, self.umbral_alerta_consumo),
                 'prioridad': 'alta',
                 'responsable': self.id_usuario.id if self.id_usuario else False,
                 'estado': 'pendiente', 
                 'categoria': 'consumo',  
                 'impacto_energetico': 'alto' if tipo_alerta == 'critica' else 'medio',  
             }
-            alerta = self.env['electric.asset.management.alerta'].create(alerta_vals)
+            alerta = self.env['electric.asset.management.alerta'].create(default_vals)
 
             return {
-                'name': _('Alerta Generada'),
-                'type': 'ir.actions.act_window',
-                'res_model': 'electric.asset.management.alerta',
-                'view_mode': 'form',
-                'res_id': alerta.id, 
-                'target': 'new', 
-                'context': {'default_' + key: val for key, val in alerta_vals.items()}
-            }
+            'name': _('Alerta de Eficiencia Energética'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'electric.asset.management.alerta',
+            'view_mode': 'form',
+            'target': 'new',  # Abre el formulario como un modal
+            'context': {'default_' + key: val for key, val in default_vals.items()}  # Valores predeterminados
+        }
 
         except UserError as ue:
             _logger.error(f"Error al generar alerta de consumo: {ue}")
-            raise ue  # 
+            raise ue
         except Exception as e:
             _logger.error(f"Error inesperado al generar alerta de consumo: {e}")
             raise UserError(_("Ocurrió un error inesperado al generar la alerta. Por favor, revise los registros del sistema."))
 
     def action_generar_reporte_eficiencia(self):
-        """Genera un reporte de eficiencia energética para el dispositivo y abre un modal."""
-        self.ensure_one()  
-        try:
-            reporte_vals = {
-                'tipo_reporte': 'auditoria',
-                'contenido': _("Reporte de Eficiencia Energética para %s\n"
-                            "Eficiencia Operativa: %.2f%%\n"
-                            "EnPI: %.2f\n"
-                            "Oportunidades de Mejora:\n%s") % 
-                            (self.name, self.eficiencia_operativa, self.enpi, self.oportunidades_mejora),
-                'dispositivos_afectados': [(4, self.id)],
-                'consumo_total': self.consumo_mensual_kwh,
-                'costos_asociados': self.costo_mensual,
-                'eficiencia_energetica': self.eficiencia_operativa,
-                'recomendaciones': self.oportunidades_mejora,
-                'estado': 'generado'
-            }
+        """Abre un modal para generar un reporte de eficiencia energética."""
+        self.ensure_one()  # Asegurarse de que solo se ejecute para un registro
 
-            reporte = self.env['electric.asset.management.reporte'].create(reporte_vals)
+        # Preparar los valores predeterminados para el formulario
+        default_vals = {
+            'tipo_reporte': 'auditoria',
+            'contenido': _("Reporte de Eficiencia Energética para %s\n"
+                        "Eficiencia Operativa: %.2f%%\n"
+                        "EnPI: %.2f\n"
+                        "Oportunidades de Mejora:\n%s") %
+                        (self.name, self.eficiencia_operativa, self.enpi, self.oportunidades_mejora),
+            'dispositivos_afectados': [(4, self.id)],
+            'consumo_total': self.consumo_mensual_kwh,
+            'costos_asociados': self.costo_mensual,
+            'eficiencia_energetica': self.eficiencia_operativa,
+            'recomendaciones': self.oportunidades_mejora,
+            'estado': 'generado'
+        }
 
-            return {
-                'name': _('Reporte de Eficiencia Energética'),
-                'type': 'ir.actions.act_window',
-                'res_model': 'electric.asset.management.reporte',
-                'view_mode': 'form',
-                'res_id': reporte.id,  
-                'target': 'new',  
-                'context': {'default_' + key: val for key, val in reporte_vals.items()}
-            }
-
-        except Exception as e:
-            _logger.error(f"Error inesperado al generar reporte de eficiencia: {e}")
-            raise UserError(_("Ocurrió un error inesperado al generar el reporte. Por favor, revise los registros del sistema."))
+        # Abrir el formulario en modo "Crear" con valores predeterminados
+        return {
+            'name': _('Reporte de Eficiencia Energética'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'electric.asset.management.reporte',
+            'view_mode': 'form',
+            'target': 'new',  # Abre el formulario como un modal
+            'context': {'default_' + key: val for key, val in default_vals.items()}  # Valores predeterminados
+        }
 
     from odoo import models
 

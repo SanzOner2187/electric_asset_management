@@ -5,70 +5,43 @@ from dateutil.relativedelta import relativedelta
 class Zona(models.Model):
     _name = 'electric.asset.management.zona'
     _description = 'Zonas de la empresa'
-    _order = 'name'  # Ordenar por nombre por defecto
+    _order = 'name'  # ordenar por nombre
+    _parent_name = 'zona_padre'  # campo que define la relacion padre - hijo
+    _parent_store = True  # habilita almacenamiento de jerarquia 
+    _rec_name = 'complete_name'  # usa nombre completo para jerarquia
 
-    name = fields.Char(
-        string='Nombre',
-        required=True,
-        tracking=True,  # Seguimiento de cambios
-        help="Nombre identificativo de la zona según ISO 50001"
-    )
-    description = fields.Text(
-        string='Descripción',
-        tracking=True,
-        help="Descripción detallada de la zona para facilitar su identificación"
-    )
-    ubicacion = fields.Char(
-        string='Ubicación',
-        required=True,
-        help="Ubicación física de la zona dentro de la empresa"
-    )
-    fecha_registro = fields.Datetime(
-        string='Fecha de Registro',
-        default=fields.Datetime.now,
-        readonly=True,
-        help="Fecha en la que se registró la zona"
-    )
-    objetivo_reduccion = fields.Float(
-        string='Objetivo de Reducción (%)',
-        help="Objetivo de reducción de consumo energético según ISO 50001",
-        tracking=True
-    )
-    consumo_referencia = fields.Float(
-        string='Consumo de Referencia (kWh)',
-        help="Consumo base para comparar mejoras energéticas",
-        tracking=True
-    )
-    area_m2 = fields.Float(
-        string='Área (m²)',
-        help="Área de la zona para calcular intensidad energética",
-        tracking=True
-    )
-    intensidad_energetica = fields.Float(
-        string='Intensidad Energética (kWh/m²)',
-        compute='_compute_intensidad_energetica',
-        store=True,
-        help="Indicador clave de rendimiento energético según ISO 50001",
-        digits=(10, 4)  # Precisión para cálculos energéticos
-    )
-    es_area_critica = fields.Boolean(
-        string='Área Crítica',
-        help="Zonas con mayor consumo energético según análisis ISO 50001",
-        tracking=True
-    )
-    responsable_energia = fields.Many2one(
-        'res.users',  # Relación con usuarios del sistema
-        string='Responsable Energía',
-        help="Persona encargada de gestionar la energía en esta zona"
-    )
-    ultima_auditoria = fields.Date(
-        string='Última Auditoría Energética',
-        help="Fecha de la última auditoría energética realizada en esta zona"
-    )
-    proxima_auditoria = fields.Date(
-        string='Próxima Auditoría Energética',
-        help="Fecha programada para la próxima auditoría energética"
-    )
+    name = fields.Char(string='Nombre', required=True, tracking=True, help="Nombre identificativo de la zona según ISO 50001")
+    complete_name = fields.Char(string='Nombre Completo', compute='_compute_complete_name', store=True, help="Nombre completo que incluye la jerarquía de zonas")
+    description = fields.Text(string='Descripción',tracking=True, help="Descripción detallada de la zona para facilitar su identificación")
+    ubicacion = fields.Char(string='Ubicación', required=True, help="Ubicación física de la zona dentro de la empresa")
+    fecha_registro = fields.Datetime(string='Fecha de Registro', default=fields.Datetime.now, readonly=True, help="Fecha en la que se registró la zona")
+    objetivo_reduccion = fields.Float(string='Objetivo de Reducción (%)',help="Objetivo de reducción de consumo energético según ISO 50001",tracking=True)
+    consumo_referencia = fields.Float(string='Consumo de Referencia (kWh)', help="Consumo base para comparar mejoras energéticas", tracking=True)
+    area_m2 = fields.Float(string='Área (m²)',help="Área de la zona para calcular intensidad energética", tracking=True)
+    intensidad_energetica = fields.Float(string='Intensidad Energética (kWh/m²)', compute='_compute_intensidad_energetica', store=True, help="Indicador clave de rendimiento energético según ISO 50001",digits=(10, 4))
+    es_area_critica = fields.Boolean(string='Área Crítica', help="Zonas con mayor consumo energético según análisis ISO 50001", tracking=True)
+    responsable_energia = fields.Many2one('res.users', string='Responsable Energía', help="Persona encargada de gestionar la energía en esta zona")
+    ultima_auditoria = fields.Date(string='Última Auditoría Energética',help="Fecha de la última auditoría energética realizada en esta zona")
+    proxima_auditoria = fields.Date(string='Próxima Auditoría Energética',help="Fecha programada para la próxima auditoría energética")
+    zona_padre = fields.Many2one('electric.asset.management.zona', string='Zona Padre', ondelete='restrict', help="Zona principal a la que pertenece esta subzona")
+    subzonas = fields.One2many('electric.asset.management.zona','zona_padre', string='Subzonas', help="Lista de subzonas que dependen de esta zona")
+    parent_path = fields.Char(index=True, help="Campo interno para manejar la jerarquía de zonas")
+    dispositivos_ids = fields.One2many('electric.asset.management.dispositivo', 'id_zona', string='Dispositivos', help="Dispositivos asociados a esta zona")
+    mediciones_ids = fields.One2many('electric.asset.management.medicion', 'id_zona', string='Mediciones', help="Mediciones asociadas a esta zona")
+    alertas_ids = fields.One2many('electric.asset.management.alerta', 'zona_id', string='Alertas', help="Alertas asociadas a esta zona")
+    reportes_ids = fields.One2many('electric.asset.management.reporte', 'zona_id', string='Reportes', help="Reportes asociados a esta zona")
+
+    @api.depends('name', 'zona_padre.complete_name')
+    def _compute_complete_name(self):
+        """
+        Calcula el nombre completo de la zona incluyendo la jerarquía.
+        Ejemplo: "Primer Piso / Mostrador"
+        """
+        for zona in self:
+            if zona.zona_padre:
+                zona.complete_name = f"{zona.zona_padre.complete_name} / {zona.name}"
+            else:
+                zona.complete_name = zona.name
 
     @api.depends('consumo_referencia', 'area_m2')
     def _compute_intensidad_energetica(self):
@@ -131,32 +104,36 @@ class Zona(models.Model):
             'target': 'new',
         }
     
+    @api.constrains('zona_padre')
+    def _check_circular_reference(self):
+        for zona in self:
+            if zona.zona_padre:
+                current = zona.zona_padre
+                while current:
+                    if current == zona:
+                        raise ValidationError(_("No se permite una referencia circular en la jerarquía de zonas."))
+                    current = current.zona_padre
 
     def data_zona_dashboard(self):
         """
         Método para extraer datos clave del modelo Zona para mostrar en un dashboard.
         """
-        # traer zonas
         zonas = self.env['electric.asset.management.zona'].search([])
 
-        # datos para kpis
         total_zonas = len(zonas)
         areas_criticas = len(zonas.filtered(lambda z: z.es_area_critica))
         intensidad_energetica_promedio = sum(z.intensidad_energetica for z in zonas) / total_zonas if total_zonas > 0 else 0.0
 
-        # zonas con audotorias proximas
         fecha_actual = fields.Date.today()
         proximas_auditorias = zonas.filtered(lambda z: z.proxima_auditoria and z.proxima_auditoria <= fecha_actual + relativedelta(days=30))
         zonas_proximas_auditorias = len(proximas_auditorias)
 
-        # datos para graficos
         zonas_por_intensidad = {
             'baja': len(zonas.filtered(lambda z: z.intensidad_energetica < 50)),
             'media': len(zonas.filtered(lambda z: 50 <= z.intensidad_energetica < 150)),
             'alta': len(zonas.filtered(lambda z: z.intensidad_energetica >= 150)),
         }
 
-        # retornar datos
         return {
             'kpi': {
                 'total_zonas': total_zonas,
@@ -168,7 +145,7 @@ class Zona(models.Model):
                 'por_intensidad': zonas_por_intensidad,
             },
         }
-    
+
     @api.model
     def get_dashboard_data_zona(self):
         """

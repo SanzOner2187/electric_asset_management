@@ -76,6 +76,7 @@
                             <group string="Información General">
                                 <field name="user_id" string="Usuario"/>
                                 <field name="tipo_reporte" placeholder="Seleccione el tipo de reporte"/>
+                                <field name="zona_id" placeholder="Zona asociada al reporte"/>
                                 <field name="prioridad" placeholder="Seleccione la prioridad"/>
                                 <field name="fecha_generacion" string="Fecha de Generación"/>
                                 <field name="periodo_inicio" string="Inicio del Período"/>
@@ -99,7 +100,11 @@
                                 <field name="areas_mejora" string="Áreas de Mejora"/>
                                 <field name="recomendaciones" string="Recomendaciones" placeholder="Ingrese recomendaciones aquí."/>
                                 <field name="acciones_correctivas" string="Acciones Correctivas Propuestas" placeholder="Ingrese acciones correctivas aquí."/>
-                                <field name="seguimiento_requerido" string="Requiere Seguimiento" placeholder="Ingrese si el dipositivo nececita seguimiento requerido aquí."/>
+                                <div>
+                                    <h5>
+                                        Requiere seguimiento  <field name="seguimiento_requerido" string="Requiere Seguimiento" placeholder="Ingrese si el dipositivo nececita seguimiento requerido aquí."/>
+                                    </h5>
+                                </div>
                             </page>
                             <page string="Contenido del Reporte">
                                 <field name="contenido" string="Contenido" placeholder="Ingrese el contenido del reporte aquí."/>

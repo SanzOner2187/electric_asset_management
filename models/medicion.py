@@ -1,6 +1,9 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 from datetime import datetime, timedelta
+import logging
+
+_logger = logging.getLogger(__name__)
 
 class Medicion(models.Model):
     _name = 'electric.asset.management.medicion'

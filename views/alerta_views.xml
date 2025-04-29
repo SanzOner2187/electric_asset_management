@@ -79,6 +79,7 @@
                             <group>
                                 <field name="id_dispositivo" required="1"/>
                                 <field name="tipo_alerta" required="1"/>
+                                <field name="zona_id" required="1"/>
                                 <field name="categoria" required="1"/>
                                 <field name="impacto_energetico" required="1"/>
                                 <field name="prioridad" required="1"/>
@@ -115,6 +116,7 @@
             <field name="view_mode">kanban,form</field>
             <field name="context">{'search_default_pendiente': 1}</field>
         </record>
+
         <menuitem id="menu_electric_asset_management_alerta" name="Alertas" parent="menu_electric_asset_management_root" action="action_electric_asset_management_alerta"/>
     </data>
 </odoo>

@@ -23,10 +23,11 @@
                             </div>
                         </div>
                         <div class="row">
-                            <KpiCard name="'Consumo energetico'" value="100" percentage="6"/>
+                            <!-- KPIs de Consumo Energético -->
+                            <KpiCard name="'Consumo energético'" value="100" percentage="6"/>
                             <KpiCard name="'Alertas pendientes'" value="20" percentage="20"/>
-                            <KpiCard name="'Zonas Criticas'" value="5" percentage="4"/>
-                            <KpiCard name="'Consumo mensual'" value="'2.5k'" percentage="6"/>
+                            <KpiCard name="'Zonas críticas'" value="5" percentage="4"/>
+                            <KpiCard name="'Reportes pendientes'" value="3" percentage="5"/>
                         </div>
                         <div class="row">
                             <div class="col-lg-6 m-0 p-0">
@@ -48,7 +49,7 @@
                                             <span class="fa fa-arrow-right text-white"/>
                                         </div>
                                     </div>
-                                    <ChartComponent type="'pie'" title="'Equipos con la función de baja potencia'"/>
+                                    <ChartComponent type="'polarArea'" title="'Equipos con la función de baja potencia'"/>
                                 </div>
                             </div>
                         </div>

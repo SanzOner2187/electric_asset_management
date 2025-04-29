@@ -31,86 +31,86 @@
                     <header>
                         <!-- Botones principales -->
                         <button name="action_generar_reporte_eficiencia" type="object" class="btn-primary" string="Generar Reporte de Eficiencia" icon="fa-file-text"/>
-                        <button name="action_generar_alerta_consumo" type="object" class="btn-secondary" string="Generar Alerta" icon="fa-exclamation-triangle"
+                        <button name="action_generar_alerta_consumo" type="object" class="btn-primary" string="Generar Alerta" icon="fa-exclamation-triangle"
                                 attrs="{'invisible': [('umbral_alerta_consumo', '=', 0)]}"/>
                     </header>
                     <sheet>
                         <!-- Información General -->
                         <group string="Información General">
                             <group>
-                                <field name="name" required="1"/>
-                                <field name="tipo" required="1"/>
-                                <field name="marca"/>
-                                <field name="modelo"/>
-                                <field name="numero_serie"/>
-                                <field name="id_zona"/>
+                                <field name="name" required="1" placeholder="Ingrese el nombre del dispositivo" help="Nombre único que identifica al dispositivo."/>
+                                <field name="tipo" required="1" placeholder="Ejemplo: Computadora, Refrigerador" help="Tipo de dispositivo eléctrico."/>
+                                <field name="marca" placeholder="Ejemplo: Dell, LG" help="Marca del dispositivo."/>
+                                <field name="modelo" placeholder="Ejemplo: XPS 13, RT-32" help="Modelo específico del dispositivo."/>
+                                <field name="numero_serie" placeholder="Ingrese el número de serie" help="Número de serie único del dispositivo."/>
+                                <field name="id_zona" placeholder="Seleccione la zona asignada" help="Zona donde está ubicado el dispositivo."/>
                             </group>
                             <group>
-                                <field name="fecha_registro" readonly="1"/>
-                                <field name="vida_util_estimada"/>
-                                <field name="etiqueta_eficiencia"/>
-                                <field name="es_equipo_critico" widget="boolean_button"/>
-                                <field name="estado"/>
+                                <field name="fecha_registro" readonly="1" help="Fecha en que se registró el dispositivo en el sistema."/>
+                                <field name="vida_util_estimada" placeholder="En años" help="Vida útil estimada del dispositivo en años."/>
+                                <field name="etiqueta_eficiencia" placeholder="Ejemplo: A+, B" help="Etiqueta de eficiencia energética del dispositivo."/>
+                                <field name="es_equipo_critico" widget="boolean_button" help="Indica si el dispositivo es crítico para la operación."/>
+                                <field name="estado" placeholder="Ejemplo: Buenas condiciones" help="Estado actual del dispositivo."/>
                             </group>
                         </group>
 
                         <!-- Responsable -->
                         <group string="Responsable">
-                            <field name="id_usuario" required="1"/>
-                            <field name="contacto_responsable" placeholder="Ingrese el contacto del responsable" readonly="1"/>
+                            <field name="id_usuario" required="1" placeholder="Seleccione el usuario responsable" help="Usuario responsable del dispositivo."/>
+                            <field name="contacto_responsable" placeholder="Ingrese el contacto del responsable" readonly="1" help="Información de contacto del responsable."/>
                         </group>
 
                         <!-- Consumo Energético -->
                         <group string="Consumo Energético">
                             <group>
-                                <field name="consumo_energetico" required="1"/>
-                                <field name="umbral_alerta_consumo" required="1"/>
-                                <field name="potencia_aparente_base" required="1"/>
-                                <field name="umbral_desviacion"/>
-                                <field name="horas_uso_diario" widget="float_time"/>
-                                <field name="dias_uso_semana"/>
+                                <field name="consumo_energetico" required="1" placeholder="En kW" help="Consumo energético del dispositivo en kilovatios (kW)."/>
+                                <field name="umbral_alerta_consumo" required="1" placeholder="Umbral máximo permitido" help="Umbral de consumo por encima del cual se generará una alerta."/>
+                                <field name="potencia_aparente_base" required="1" placeholder="En VA" help="Potencia aparente base del dispositivo en voltiamperios (VA)."/>
+                                <field name="umbral_desviacion" placeholder="Desviación máxima permitida" help="Desviación máxima permitida en el consumo."/>
+                                <field name="horas_uso_diario" widget="float_time" placeholder="Horas de uso diario" help="Cantidad de horas que el dispositivo está en uso diariamente."/>
+                                <field name="dias_uso_semana" placeholder="Días a la semana" help="Número de días a la semana que el dispositivo está en uso."/>
                             </group>
                             <group>
-                                <field name="consumo_diario_kwh" readonly="1"/>
-                                <field name="consumo_mensual_kwh" readonly="1"/>
-                                <field name="costo_kwh"/>
-                                <field name="costo_diario" readonly="1" widget="monetary"/>
-                                <field name="costo_mensual" readonly="1" widget="monetary"/>
+                                <field name="consumo_diario_kwh" readonly="1" help="Consumo diario estimado en kilovatios-hora (kWh)."/>
+                                <field name="consumo_mensual_kwh" readonly="1" help="Consumo mensual estimado en kilovatios-hora (kWh)."/>
+                                <field name="costo_kwh" placeholder="Costo por kWh" help="Costo por kilovatio-hora (kWh) de energía."/>
+                                <field name="costo_diario" readonly="1" widget="monetary" help="Costo diario estimado de operación."/>
+                                <field name="costo_mensual" readonly="1" widget="monetary" help="Costo mensual estimado de operación."/>
                             </group>
                             <group>
-                                <field name="modo_bajo_consumo"/>
-                                <field name="potencia_bajo_consumo"/>
+                                <field name="modo_bajo_consumo" help="Indica si el dispositivo tiene un modo de bajo consumo."/>
+                                <field name="potencia_bajo_consumo" placeholder="En kW" help="Potencia consumida en modo de bajo consumo."/>
                             </group>
                         </group>
 
                         <!-- Mantenimiento -->
                         <group string="Mantenimiento">
-                            <field name="fecha_ultima_revision"/>
-                            <field name="fuente_alimentacion"/>
-                            <field name="fecha_calibracion"/>
-                            <field name="proxima_calibracion"/>
+                            <field name="fecha_ultima_revision" placeholder="Fecha de última revisión" help="Fecha de la última revisión o mantenimiento realizado."/>
+                            <field name="fuente_alimentacion" placeholder="Ejemplo: Corriente alterna" help="Fuente de alimentación del dispositivo."/>
+                            <field name="fecha_calibracion" placeholder="Fecha de calibración" help="Fecha de la última calibración realizada."/>
+                            <field name="proxima_calibracion" placeholder="Próxima fecha de calibración" help="Fecha programada para la próxima calibración."/>
                         </group>
 
                         <!-- Pestañas ISO 50001 -->
                         <notebook>
                             <page string="Indicadores ISO 50001">
                                 <group>
-                                    <field name="eficiencia_operativa" widget="progressbar"/>
-                                    <field name="enpi"/>
+                                    <field name="eficiencia_operativa" widget="progressbar" help="Eficiencia operativa del dispositivo en porcentaje."/>
+                                    <field name="enpi" placeholder="Índice de desempeño energético" help="Indicador de desempeño energético normalizado (ENPI)."/>
                                 </group>
                                 <group string="Oportunidades de Mejora">
-                                    <field name="oportunidades_mejora" readonly="1" nolabel="1" placeholder="Sin oportunidades de mejora disponibles."/>
+                                    <field name="oportunidades_mejora" readonly="1" nolabel="1" placeholder="Sin oportunidades de mejora disponibles." help="Lista de oportunidades de mejora identificadas."/>
                                 </group>
                             </page>
                             <page string="Histórico de Mediciones">
                                 <field name="medicion_ids" context="{'default_id_dispositivo': id}">
                                     <tree>
-                                        <field name="fecha_hora"/>
-                                        <field name="consumo"/>
-                                        <field name="es_medicion_atipica" widget="boolean_button"/>
-                                        <field name="desviacion_estandar"/>
-                                        <field name="temperatura_ambiente"/>
-                                        <field name="humedad_relativa"/>
+                                        <field name="fecha_hora" help="Fecha y hora de la medición."/>
+                                        <field name="consumo" help="Consumo registrado en la medición."/>
+                                        <field name="es_medicion_atipica" widget="boolean_button" help="Indica si la medición es atípica."/>
+                                        <field name="desviacion_estandar" help="Desviación estándar de la medición."/>
+                                        <field name="temperatura_ambiente" help="Temperatura ambiente durante la medición."/>
+                                        <field name="humedad_relativa" help="Humedad relativa durante la medición."/>
                                     </tree>
                                 </field>
                             </page>

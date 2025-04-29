@@ -6,7 +6,7 @@ class Reporte(models.Model):
     _name = 'electric.asset.management.reporte'
     _description = 'Reportes generados por los usuarios'
 
-    user_id = fields.Many2one('electric.asset.management.usuario', string='Usuario')
+    user_id = fields.Many2one('electric.asset.management.usuario', string='Usuario', required=True)
     tipo_reporte = fields.Selection([
         ('semanal', 'Semanal'),
         ('mensual', 'Mensual'),
@@ -19,6 +19,13 @@ class Reporte(models.Model):
         ('media', 'Media'),
         ('alta', 'Alta')
     ], string='Prioridad', default='media', required=True)
+    zona_id = fields.Many2one(
+        related = 'dispositivos_afectados.id_zona',
+        string = 'Zona',
+        required = True,
+        ondelete = 'restrict',
+        help = "Zona asociada al reporte"
+    )
     fecha_generacion = fields.Datetime(string='Fecha de Generación', default=fields.Datetime.now)
     contenido = fields.Text(string='Contenido', required=True)
     periodo_inicio = fields.Datetime(string='Inicio del Período')
@@ -54,6 +61,19 @@ class Reporte(models.Model):
     politica_energetica = fields.Text(string='Política Energética', help="Describa la política energética aplicable a este reporte.")
     resumen_dashboard = fields.Text(string='Resumen para Dashboard', compute='_compute_resumen_dashboard', store=True)
     alerta_eficiencia = fields.Boolean(string='Alerta de Eficiencia', compute='_compute_alerta_eficiencia')
+
+    # filepath: /opt/odoo16/16.0/extra-addons/santiago/electric_asset_management/models/reporte.py
+    name = fields.Char(
+        string='Nombre del Reporte',
+        compute='_compute_name',
+        store=True,
+        help="Nombre generado automáticamente para identificar el reporte"
+    )
+
+    @api.depends('tipo_reporte', 'fecha_generacion')
+    def _compute_name(self):
+        for reporte in self:
+            reporte.name = f"{dict(self._fields['tipo_reporte'].selection).get(reporte.tipo_reporte, 'Reporte')} - {reporte.fecha_generacion.strftime('%Y-%m-%d') if reporte.fecha_generacion else ''}"
 
     # Validación de fechas
     @api.constrains('periodo_inicio', 'periodo_fin')

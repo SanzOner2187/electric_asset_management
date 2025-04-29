@@ -1,3 +1,4 @@
+<!-- path: views/electric_asset_management_zona_views.xml -->
 <odoo>
     <data>
         <!-- Vista de Zonas (Tree) -->
@@ -6,9 +7,10 @@
             <field name="model">electric.asset.management.zona</field>
             <field name="arch" type="xml">
                 <tree decoration-danger="es_area_critica" decoration-success="objetivo_reduccion > 0">
-                    <field name="name"/>
+                    <field name="complete_name" string="Zona"/>
                     <field name="ubicacion"/>
                     <field name="es_area_critica" widget="boolean_button" options="{'terminology': 'Estado'}"/>
+                    <field name="area_m2" string="Área (m²)"/>
                     <field name="intensidad_energetica" string="Intensidad Energética (kWh/m²)"/>
                     <field name="objetivo_reduccion" string="Objetivo Reducción (%)"/>
                     <field name="consumo_referencia" string="Consumo Referencia (kWh)"/>
@@ -21,24 +23,23 @@
             <field name="name">electric.asset.management.zona.form</field>
             <field name="model">electric.asset.management.zona</field>
             <field name="arch" type="xml">
-                <form>
+                <form string="Zona">
                     <sheet>
                         <div class="oe_title">
                             <h1>
                                 <field name="name" placeholder="Nombre de la Zona"/>
                             </h1>
                         </div>
-
                         <group>
                             <group string="Información General">
                                 <field name="ubicacion" placeholder="Ejemplo: Planta Norte"/>
-                                <field name="area_m2" string="Área (m²)" help="Área de la zona para cálculos energéticos"/>
+                                <field name="area_m2" string="Área (m²)"/>
                                 <field name="es_area_critica" widget="boolean_toggle" options="{'terminology': 'Estado'}"/>
                             </group>
                             <group string="Gestión Energética ISO 50001">
-                                <field name="consumo_referencia" string="Consumo de Referencia (kWh)" help="Base para comparar mejoras energéticas"/>
+                                <field name="consumo_referencia" string="Consumo de Referencia (kWh)"/>
                                 <field name="intensidad_energetica" string="Intensidad Energética (kWh/m²)" readonly="1"/>
-                                <field name="objetivo_reduccion" string="Objetivo de Reducción (%)" help="Meta de reducción energética según ISO 50001"/>
+                                <field name="objetivo_reduccion" string="Objetivo de Reducción (%)"/>
                                 <field name="responsable_energia" string="Responsable Energía"/>
                                 <field name="ultima_auditoria" string="Última Auditoría" widget="date"/>
                                 <field name="proxima_auditoria" string="Próxima Auditoría" widget="date"/>
@@ -48,6 +49,55 @@
                         <notebook>
                             <page string="Descripción y Observaciones">
                                 <field name="description" placeholder="Detalles sobre la zona..."/>
+                            </page>
+                            <page string="Subzonas">
+                                <field name="subzonas">
+                                    <tree>
+                                        <field name="name"/>
+                                        <field name="ubicacion"/>
+                                        <field name="es_area_critica" widget="boolean_button" options="{'terminology': 'Estado'}"/>
+                                        <field name="intensidad_energetica" string="Intensidad Energética (kWh/m²)"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Dispositivos">
+                                <field name="dispositivos_ids">
+                                    <tree>
+                                        <field name="name"/>
+                                        <field name="tipo"/>
+                                        <field name="estado"/>
+                                        <field name="consumo_energetico"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Mediciones">
+                                <field name="mediciones_ids">
+                                    <tree>
+                                        <field name="fecha_hora"/>
+                                        <field name="consumo"/>
+                                        <field name="potencia_aparente"/>
+                                        <field name="es_medicion_atipica"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Alertas">
+                                <field name="alertas_ids">
+                                    <tree>
+                                        <field name="descripcion"/>
+                                        <field name="tipo_alerta"/>
+                                        <field name="estado"/>
+                                        <field name="prioridad"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Reportes">
+                                <field name="reportes_ids">
+                                    <tree>
+                                        <field name="name"/>
+                                        <field name="fecha_generacion"/>
+                                        <field name="tipo_reporte"/>
+                                    </tree>
+                                </field>
                             </page>
                         </notebook>
                     </sheet>

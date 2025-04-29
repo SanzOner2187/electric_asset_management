@@ -6,11 +6,21 @@ class Alerta(models.Model):
     _description = 'Modelo para gestionar alertas de dispositivos eléctricos'
 
     # Campos principales
-    id_dispositivo = fields.Many2one('electric.asset.management.dispositivo', string='Dispositivo', required=True)
+    id_dispositivo = fields.Many2one('electric.asset.management.dispositivo', string='Dispositivo', required=True, ondelete='cascade', help="Dispositivo que genero la alerta")
     tipo_alerta = fields.Selection([
         ('advertencia', 'Advertencia'),
-        ('manual', 'Manual')
+        ('manual', 'Manual'),
+        ('critica', 'Critica')
     ], string='Tipo de Alerta', required=True)
+
+    zona_id = fields.Many2one(
+        related='id_dispositivo.id_zona',
+        string='Zona',
+        store=True,
+        readonly=True,
+        help="Zona asociada al dispositivo"
+    )
+
     descripcion = fields.Text(string='Descripción', required=True)
     fecha_hora = fields.Datetime(string='Fecha y Hora', default=fields.Datetime.now, readonly=True)
     estado = fields.Selection([
@@ -34,12 +44,12 @@ class Alerta(models.Model):
         ('mantenimiento', 'Mantenimiento Requerido'),
         ('calibracion', 'Necesita Calibración'),
         ('seguridad', 'Problema de Seguridad')
-    ], string='Categoría', required=True)
+    ], string='Categoría', required=True, default='consumo')
     impacto_energetico = fields.Selection([
         ('alto', 'Alto'),
         ('medio', 'Medio'),
         ('bajo', 'Bajo')
-    ], string='Impacto Energético', required=True)
+    ], string='Impacto Energético', required=True, default='medio')
 
     # Recomendaciones calculadas
     recomendaciones = fields.Text(string='Recomendaciones', compute='_compute_recomendaciones')
@@ -97,6 +107,16 @@ class Alerta(models.Model):
             self.id_dispositivo.message_post(
                 body=_("Alerta resuelta: %s\nAcciones tomadas: %s") % (self.descripcion, self.acciones_tomadas)
             )
+        # Mostrar notificación de éxito
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Alerta Resuelta'),
+                'message': _('La alerta ha sido resuelta correctamente.'),
+                'sticky': False,
+            }
+        }
 
     # Generar reporte
     def action_generar_reporte(self):

@@ -7,7 +7,7 @@
     'website': "portafolio de creaciones",
     'category': 'Accounting',
     'version': '1.0',
-    'depends': ['base', 'web'], 
+    'depends': ['base', 'mail'], 
     'data': [
         'views/menu_views.xml',
         'views/dashboard_views.xml',

@@ -1,7 +1,7 @@
 /**@odoo-module */
 
 import { registry } from "@web/core/registry";
-const { Component, onWillStart, useRef, onMounted } = owl;
+const { Component, onWillStart, useRef, onMounted, rpc } = owl;
 
 
 export class ChartComponent extends Component {
@@ -20,15 +20,14 @@ export class ChartComponent extends Component {
                     'Red',
                     'Blue',
                     'Yellow',
+                    'orange',
+                    'green',
+                    'purple',
                 ],
                 datasets: [
                     {
                     label: 'primer grafico',
-                    data: [300, 50, 100],
-                    hoverOffset: 4
-                }, {
-                    label: 'segundo grafico',
-                    data: [100, 70, 150],
+                    data: [300, 79, 100, 200, 350, 400],
                     hoverOffset: 4
                 }]
               },
@@ -46,6 +45,8 @@ export class ChartComponent extends Component {
               }
             }
           );
+
+          console.log("Graficos renderizados correctamente")
     }
 }
 
