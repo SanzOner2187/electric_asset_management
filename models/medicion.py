@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 from datetime import datetime, timedelta
 import logging
 
@@ -11,9 +11,40 @@ class Medicion(models.Model):
     Modelo para registrar mediciones de dispositivos eléctricos.
     Incluye cálculos de KPIs y detección de mediciones atípicas.
     """
-    _order = 'fecha_hora desc'  # Ordenar por fecha y hora descendente para facilitar la visualización
-
+    _order = 'fecha_hora desc'  
     # Relaciones y campos básicos
+    tipo_medicion = fields.Selection([
+        ('general', 'Medición General por Zona'),
+        ('zona_especifica', 'Medición por Zonas'),
+        ('dispositivo', 'Medición de un Dispositivo'),
+    ], string="Tipo de Medición", required=True)
+
+    # Relacionamiento según tipo de medición
+    zona_id = fields.Many2one(
+        'electric.asset.management.zona',
+        string="Zona (General)", 
+        ondelete='cascade'
+    )
+
+    zonas_ids = fields.Many2many(
+        'electric.asset.management.zona', 
+        'medicion_zona_rel', 
+        'medicion_id',       
+        'zona_id',            
+        string="Zonas (Varias)"
+    )
+
+    dispositivos_relacionados = fields.Many2many(
+        'electric.asset.management.dispositivo',
+        string="Dispositivos Relacionados",
+        compute="_compute_dispositivos_relacionados",
+        store=False,
+        help="Dispositivos relacionados con la zona o zonas seleccionadas."
+    )
+    objeto_medido_nombre = fields.Char(
+        string="Objeto Medido", compute="_compute_objeto_medido_nombre", store=True
+    )
+
     id_dispositivo = fields.Many2one(
         'electric.asset.management.dispositivo', 
         string='Dispositivo', 
@@ -28,7 +59,7 @@ class Medicion(models.Model):
         help = "Zona donde se encuentra el dispositivo"
     )
     zona_dispositivo = fields.Char(
-        related='id_zona.name',  # Accede al nombre de la zona
+        related='id_zona.name',  
         string="Zona donde se encuentra el dispositivo",
         readonly=True
     )
@@ -49,7 +80,6 @@ class Medicion(models.Model):
     temperatura_ambiente = fields.Float(string='Temperatura Ambiente (°C)', help="Temperatura ambiental registrada durante la medición")
     humedad_relativa = fields.Float(string='Humedad Relativa (%)', help="Humedad relativa registrada durante la medición")
 
-    # Indicadores clave de rendimiento (KPIs)
     desviacion_estandar = fields.Float(
         string='Desviación Estándar', 
         compute='_compute_kpis', 
@@ -65,6 +95,102 @@ class Medicion(models.Model):
         help="Indica si la medición es atípica en comparación con el historial reciente"
     )
 
+    @api.constrains('tipo_medicion', 'zona_id', 'zonas_ids', 'id_dispositivo')
+    def _check_referencias_por_tipo(self):
+        for rec in self:
+            if rec.tipo_medicion == 'general' and not rec.zona_id:
+                raise ValidationError("Debe seleccionar una zona para la medición general.")
+            if rec.tipo_medicion == 'zona_especifica' and not rec.zonas_ids:
+                raise ValidationError("Debe seleccionar al menos una zona para medición por zonas.")
+            if rec.tipo_medicion == 'dispositivo' and not rec.id_dispositivo:
+                raise ValidationError("Debe seleccionar un dispositivo para la medición por dispositivo.")
+
+    @api.depends('tipo_medicion', 'zona_id', 'zonas_ids', 'dispositivos_zonas')
+    def _compute_nombre_objeto_medido(self):
+        for rec in self:
+            if rec.tipo_medicion == 'general':
+                rec.objeto_medido_nombre = rec.zona_id.name or ''
+            elif rec.tipo_medicion == 'zona_especifica':
+                rec.objeto_medido_nombre = ', '.join(rec.zonas_ids.mapped('name'))
+            elif rec.tipo_medicion == 'dispositivo':
+                rec.objeto_medido_nombre = rec.dispositivos_zonas.name or ''
+
+    @api.depends('tipo_medicion', 'zona_id', 'zonas_ids', 'id_dispositivo')
+    def _compute_objeto_medido_nombre(self):
+        for rec in self:
+            if rec.tipo_medicion == 'general':
+                rec.objeto_medido_nombre = rec.zona_id.name or ''
+            elif rec.tipo_medicion == 'zona_especifica':
+                rec.objeto_medido_nombre = ', '.join(rec.zonas_ids.mapped('name'))
+            elif rec.tipo_medicion == 'dispositivo':
+                rec.objeto_medido_nombre = rec.id_dispositivo.name or ''
+            else:
+                rec.objeto_medido_nombre = ''
+
+    @api.onchange('tipo_medicion', 'zona_id', 'zonas_ids')
+    def _onchange_filtrar_dispositivo_por_zonas(self):
+        if self.tipo_medicion == 'zona_especifica' and self.zonas_ids:
+            return {
+                'domain': {
+                    'dispositivos_zonas': [('id_zona', 'in', self.zonas_ids.ids)]
+                }
+            }
+        elif self.tipo_medicion == 'general' and self.zona_id:
+            return {
+                'domain': {
+                    'dispositivos_zonas': [('id_zona', '=', self.zona_id.id)]
+                }
+            }
+        return {'domain': {'dispositivos_zonas': []}}
+
+
+    @api.onchange('tipo_medicion', 'zona_id', 'zonas_ids')
+    def _onchange_tipo_medicion(self):
+        """
+        Actualiza automáticamente los dispositivos y el consumo según el tipo de medición y las zonas seleccionadas.
+        """
+        if self.tipo_medicion == 'general' and self.zona_id:
+            # Obtener dispositivos de la zona seleccionada
+            dispositivos = self.env['electric.asset.management.dispositivo'].search([('id_zona', '=', self.zona_id.id)])
+            self.id_dispositivo = dispositivos and dispositivos[0].id or False  # Seleccionar el primer dispositivo
+            # Calcular el consumo total de la zona
+            self.consumo = sum(dispositivos.mapped('consumo_energetico')) / 1000  # Convertir a kWh
+
+        elif self.tipo_medicion == 'zona_especifica' and self.zonas_ids:
+            # Obtener dispositivos de las zonas seleccionadas
+            dispositivos = self.env['electric.asset.management.dispositivo'].search([('id_zona', 'in', self.zonas_ids.ids)])
+            self.id_dispositivo = dispositivos and dispositivos[0].id or False  # Seleccionar el primer dispositivo
+            # Calcular el consumo total de las zonas
+            self.consumo = sum(dispositivos.mapped('consumo_energetico')) / 1000  # Convertir a kWh
+
+        elif self.tipo_medicion == 'dispositivo' and self.id_dispositivo:
+            # Si es por dispositivo, usar el consumo del dispositivo seleccionado
+            self.consumo = self.id_dispositivo.consumo_energetico / 1000  # Convertir a kWh
+
+        else:
+            # Limpiar los campos si no hay selección válida
+            self.id_dispositivo = False
+            self.consumo = 0.0
+
+    @api.onchange('tipo_medicion', 'zona_id', 'zonas_ids')
+    def _compute_dispositivos_relacionados(self):
+        """
+        Actualiza los dispositivos relacionados según el tipo de medición y las zonas seleccionadas.
+        """
+        for rec in self:
+            if rec.tipo_medicion == 'general' and rec.zona_id:
+                # Obtener dispositivos de la zona seleccionada
+                rec.dispositivos_relacionados = self.env['electric.asset.management.dispositivo'].search([
+                    ('id_zona', '=', rec.zona_id.id)
+                ])
+            elif rec.tipo_medicion == 'zona_especifica' and rec.zonas_ids:
+                # Obtener dispositivos de las zonas seleccionadas
+                rec.dispositivos_relacionados = self.env['electric.asset.management.dispositivo'].search([
+                    ('id_zona', 'in', rec.zonas_ids.ids)
+                ])
+            else:
+                # Limpiar los dispositivos relacionados si no hay selección válida
+                rec.dispositivos_relacionados = False
     @api.depends('consumo', 'id_dispositivo')
     def _compute_kpis(self):
         """Calcula la desviación estándar y determina si la medición es atípica."""

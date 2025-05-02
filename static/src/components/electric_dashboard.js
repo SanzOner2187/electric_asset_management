@@ -21,7 +21,7 @@ export class ElectricDashboard extends Component {
             metthod: 'GET',
         });
         
-        this.data = data;
+        this.data = data;   
         console.log("Datos revogidos correctamente", data);
     } catch (error) {
         console.error("Error al traer los datos", error);
