@@ -150,25 +150,19 @@ class Medicion(models.Model):
         Actualiza automáticamente los dispositivos y el consumo según el tipo de medición y las zonas seleccionadas.
         """
         if self.tipo_medicion == 'general' and self.zona_id:
-            # Obtener dispositivos de la zona seleccionada
             dispositivos = self.env['electric.asset.management.dispositivo'].search([('id_zona', '=', self.zona_id.id)])
-            self.id_dispositivo = dispositivos and dispositivos[0].id or False  # Seleccionar el primer dispositivo
-            # Calcular el consumo total de la zona
-            self.consumo = sum(dispositivos.mapped('consumo_energetico')) / 1000  # Convertir a kWh
+            self.id_dispositivo = dispositivos and dispositivos[0].id or False  
+            self.consumo = sum(dispositivos.mapped('consumo_energetico')) / 1000  
 
         elif self.tipo_medicion == 'zona_especifica' and self.zonas_ids:
-            # Obtener dispositivos de las zonas seleccionadas
             dispositivos = self.env['electric.asset.management.dispositivo'].search([('id_zona', 'in', self.zonas_ids.ids)])
-            self.id_dispositivo = dispositivos and dispositivos[0].id or False  # Seleccionar el primer dispositivo
-            # Calcular el consumo total de las zonas
-            self.consumo = sum(dispositivos.mapped('consumo_energetico')) / 1000  # Convertir a kWh
+            self.id_dispositivo = dispositivos and dispositivos[0].id or False  
+            self.consumo = sum(dispositivos.mapped('consumo_energetico')) / 1000  
 
         elif self.tipo_medicion == 'dispositivo' and self.id_dispositivo:
-            # Si es por dispositivo, usar el consumo del dispositivo seleccionado
-            self.consumo = self.id_dispositivo.consumo_energetico / 1000  # Convertir a kWh
+            self.consumo = self.id_dispositivo.consumo_energetico / 1000  
 
         else:
-            # Limpiar los campos si no hay selección válida
             self.id_dispositivo = False
             self.consumo = 0.0
 
@@ -179,42 +173,35 @@ class Medicion(models.Model):
         """
         for rec in self:
             if rec.tipo_medicion == 'general' and rec.zona_id:
-                # Obtener dispositivos de la zona seleccionada
                 rec.dispositivos_relacionados = self.env['electric.asset.management.dispositivo'].search([
                     ('id_zona', '=', rec.zona_id.id)
                 ])
             elif rec.tipo_medicion == 'zona_especifica' and rec.zonas_ids:
-                # Obtener dispositivos de las zonas seleccionadas
                 rec.dispositivos_relacionados = self.env['electric.asset.management.dispositivo'].search([
                     ('id_zona', 'in', rec.zonas_ids.ids)
                 ])
             else:
-                # Limpiar los dispositivos relacionados si no hay selección válida
                 rec.dispositivos_relacionados = False
     @api.depends('consumo', 'id_dispositivo')
     def _compute_kpis(self):
         """Calcula la desviación estándar y determina si la medición es atípica."""
         for medicion in self:
             if medicion.id_dispositivo:
-                # Obtener las mediciones anteriores del mismo dispositivo
                 mediciones = self.search([
                     ('id_dispositivo', '=', medicion.id_dispositivo.id),
-                    ('fecha_hora', '<', medicion.fecha_hora)  # Excluir la medición actual
-                ], order='fecha_hora desc', limit=100)  # Limitar a las últimas 100 mediciones
+                    ('fecha_hora', '<', medicion.fecha_hora)  
+                ], order='fecha_hora desc', limit=100)  
 
                 if len(mediciones) < 2:
-                    # No hay suficientes datos para calcular la desviación estándar
                     medicion.desviacion_estandar = 0.0
                     medicion.es_medicion_atipica = False
                     continue
 
-                # Calcular la media y la desviación estándar
                 consumos = mediciones.mapped('consumo')
                 mean = sum(consumos) / len(consumos)
                 variance = sum((x - mean) ** 2 for x in consumos) / len(consumos)
                 desviacion_estandar = variance ** 0.5
 
-                # Verificar si la medición es atípica
                 umbral_desviacion = medicion.id_dispositivo.umbral_desviacion or 2.0
                 medicion.desviacion_estandar = desviacion_estandar
                 medicion.es_medicion_atipica = abs(medicion.consumo - mean) > umbral_desviacion * desviacion_estandar
@@ -230,10 +217,8 @@ class Medicion(models.Model):
             vals['id_zona'] = dispositivo.id_zona.id
         medicion = super(Medicion, self).create(vals)
 
-        # Recalcular KPIs después de crear la medición
         medicion._compute_kpis()
 
-        # Generar alerta si la medición es atípica
         if medicion.es_medicion_atipica and medicion.id_dispositivo:
             alerta_vals = {
                 'id_dispositivo': medicion.id_dispositivo.id,
@@ -266,11 +251,9 @@ class Medicion(models.Model):
     def action_generar_alerta(self):
         """Genera una alerta manual para la medición seleccionada."""
         for medicion in self:
-            # Validaciones previas
             if not medicion.es_medicion_atipica:
                 raise UserError(_("No se puede generar una alerta porque la medición no es atípica."))
 
-            # Verificar si ya existe una alerta manual para esta medición
             alerta_existente = self.env['electric.asset.management.alerta'].search([
                 ('medicion_id', '=', medicion.id),
                 ('tipo_alerta', '=', 'manual')
@@ -278,11 +261,9 @@ class Medicion(models.Model):
             if alerta_existente:
                 raise UserError(_("Ya existe una alerta manual para esta medición."))
 
-            # Validar que el dispositivo tenga un responsable asignado
             if not medicion.id_dispositivo.id_usuario:
                 raise UserError(_("No se puede generar la alerta porque el dispositivo no tiene un responsable asignado."))
 
-            # Crear los valores de la alerta
             alerta_vals = {
                 'medicion_id': medicion.id,
                 'id_dispositivo': medicion.id_dispositivo.id,
@@ -296,14 +277,12 @@ class Medicion(models.Model):
                 'estado': 'pendiente'
             }
 
-            # Crear la alerta
             try:
                 self.env['electric.asset.management.alerta'].create(alerta_vals)
             except Exception as e:
                 _logger.error(f"Error al crear la alerta: {e}")
                 raise UserError(_("Ocurrió un error al generar la alerta. Por favor, revise los registros del sistema."))
 
-        # Mostrar notificación de éxito
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
@@ -332,20 +311,16 @@ class Medicion(models.Model):
             self.potencia_aparente = self.id_dispositivo.potencia_aparente_base
 
 
-    # metodo para extraer datos para el dashboard
     def data_medicion_dashboard(self):
         """
         Método para extraer datos clave del modelo Medicion para mostrar en un dashboard.
         """
-        # obtener mediciones
         mediciones = self.env['electric.asset.management.medicion'].search([])
 
-        # datos para kpis
         total_mediciones = len(mediciones)
         mediciones_atipicas = len(mediciones.filtered(lambda m: m.es_medicion_atipica))
         consumo_promedio = sum(m.consumo for m in mediciones) / total_mediciones if total_mediciones > 0 else 0.0
 
-        # datos para graficos
         mediciones_por_zona = {
             zona.name: len(mediciones.filtered(lambda m: m.id_zona == zona))
             for zona in self.env['electric.asset.management.zona'].search([])
@@ -356,7 +331,6 @@ class Medicion(models.Model):
             for dispositivo in self.env['electric.asset.management.dispositivo'].search([])
         }
 
-        # ultimas 5 medicones
         ultimas_mediciones = mediciones.sorted(key=lambda m: m.fecha_hora, reverse=True)[:5]
         ultimas_mediciones_data = [
             {
@@ -369,7 +343,6 @@ class Medicion(models.Model):
             for m in ultimas_mediciones
         ]
 
-        # retornar datos
         return {
             'kpi': {
                 'total_mediciones': total_mediciones,

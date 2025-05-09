@@ -7,7 +7,7 @@
     'website': "portafolio de creaciones",
     'category': 'Accounting',
     'version': '1.0',
-    'depends': ['base', 'mail'], 
+    'depends': ['base', 'mail', 'account'], 
     'data': [
         'views/menu_views.xml',
         'views/dashboard_views.xml',
@@ -17,6 +17,7 @@
         'views/alerta_views.xml',
         'views/usuario_views.xml',
         'views/reporte_views.xml',
+        'views/factura_energica_views.xml',
         'security/ir.model.access.csv',
     ],
     'demo': [

@@ -35,7 +35,7 @@ class Dispositivo(models.Model):
     dias_uso_semana = fields.Integer(string='Días de Uso por Semana', default=5, tracking=True)
     consumo_diario_kwh = fields.Float(string='Consumo Diario (kWh)', compute='_calcular_consumo_diario', store=True)
     consumo_mensual_kwh = fields.Float(string='Consumo Mensual (kWh)', compute='_calcular_consumo_mensual', store=True)
-    costo_kwh = fields.Float(string='Costo por kWh', default=0.0, tracking=True)
+    costo_kwh = fields.Float(string='Costo por kWh', default=858.53, tracking=True)
     costo_diario = fields.Float(string='Costo Diario', compute='_calcular_costo_diario', store=True)
     costo_mensual = fields.Float(string='Costo Mensual', compute='_calcular_costo_mensual', store=True)
     modo_bajo_consumo = fields.Boolean(string='Modo de Bajo Consumo', default=False, tracking=True)
@@ -59,6 +59,12 @@ class Dispositivo(models.Model):
         ('c', 'C'),
         ('d', 'D')
     ], string='Etiqueta de Eficiencia Energética', default='b', tracking=True)
+
+    factura_id = fields.Many2one(
+        'electric.asset.management.factura.energetica',
+        string='Factura Asociada',
+        help="Factura energética asociada a este dispositivo"
+    )
 
     # ISO 50001
     es_equipo_critico = fields.Boolean(string='Equipo Crítico', help="Equipos con mayor consumo según análisis ISO 50001")

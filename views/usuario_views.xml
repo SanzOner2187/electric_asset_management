@@ -36,6 +36,7 @@
                             <field name="certificaciones" attrs="{'invisible': [('rol', '!=', 'auditor')]}"/>
                             <field name="fecha_ultimo_entrenamiento" attrs="{'invisible': [('rol', '!=', 'auditor')]}"/>
                             <field name="needs_recertification" attrs="{'invisible': [('rol', '!=', 'auditor')]}" readonly="1"/>
+                            <field name="dispositivo_a_cargo" attrs="{'invisible': [('rol', '!=', 'auditor')]}" placeholder="Equipos bajo cargo del Auditor"/>
                         </group>
                     </sheet>
                 </form>

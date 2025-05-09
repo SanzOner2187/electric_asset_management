@@ -6,5 +6,6 @@ from . import zona
 from . import dispositivo
 from . import medicion
 from . import alerta
-from .import usuario
+from . import usuario
 from . import reporte
+from . import factura_energica

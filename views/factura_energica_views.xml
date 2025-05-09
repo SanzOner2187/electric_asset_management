@@ -1,0 +1,82 @@
+<odoo>
+    <data>
+        <!-- Acción y Menú para factura energética -->
+        <record id="action_electric_asset_management_factura_energetica" model="ir.actions.act_window">
+            <field name="name">Factura Energética</field>
+            <field name="res_model">electric.asset.management.factura.energetica</field>
+            <field name="view_mode">tree,form</field>
+            <field name="help" type="html">
+                <p>
+                    Administra las facturas de energía, incluyendo consumos, costos y diferencias con el sistema.
+                </p>
+            </field>
+        </record>
+
+        <menuitem id="menu_electric_asset_management_factura_energetica" 
+                  name="Factura Energética" 
+                  parent="menu_electric_asset_management_root" 
+                  action="action_electric_asset_management_factura_energetica"/>
+
+        <!-- Vista Árbol -->
+        <record id="view_electric_asset_management_factura_energetica_tree" model="ir.ui.view">
+            <field name="name">electric.asset.management.factura.energetica.tree</field>
+            <field name="model">electric.asset.management.factura.energetica</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="referencia_factura"/>
+                    <field name="proveedor_id"/>
+                    <field name="zonas_consumo_ids"/>
+                    <field name="periodo_inicio"/>
+                    <field name="periodo_fin"/>
+                    <field name="consumo_total"/>
+                    <field name="total_pagar"/>
+                    <field name="diferencia_consumo"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Vista Formulario -->
+        <record id="view_electric_asset_management_factura_energetica_form" model="ir.ui.view">
+            <field name="name">electric.asset.management.factura.energetica.form</field>
+            <field name="model">electric.asset.management.factura.energetica</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group string="Información Básica">
+                                <field name="referencia_factura"/>
+                                <field name="proveedor_id"/>
+                                <field name="factura_contable_id"/>
+                                <field name="zonas_consumo_ids"/>
+                            </group>
+                            <group string="Período de Facturación">
+                                <field name="periodo_inicio"/>
+                                <field name="periodo_fin"/>
+                                <field name="dias_facturados" readonly="1"/>
+                                <field name="dispositivos_relacionados" widget="many2many_tags" readonly="1"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group string="Consumo y Costos">
+                                <field name="consumo_diario"/>
+                                <field name="costo_diario"/>
+                                <field name="consumo_mensual_estimado"/>
+                                <field name="consumo_total"/>
+                                <field name="subtotal"/>
+                                <field name="total_pagar"/>
+                            </group>
+                            <group string="Diferencias">
+                                <field name="consumo_registro_sistema"/>
+                                <field name="diferencia_consumo" readonly="1"/>
+                                <field name="diferencia_costo_estimado" readonly="1"/>
+                            </group>
+                        </group>
+                        <group string="Archivo de Factura">
+                            <field name="archivo_factura" filename="nombre_archivo"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

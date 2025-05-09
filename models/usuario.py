@@ -23,9 +23,17 @@ class Usuario(models.Model):
 
     # Campos específicos para auditores
     es_auditor_energia = fields.Boolean(string='Es Auditor de Energía', help="Indica si el usuario está certificado como auditor energético.")
-    certificaciones = fields.Text(string='Certificaciones Energéticas', help="Certificaciones relevantes para la gestión energética.")
+    certificaciones = fields.Binary(string='Certificaciones Energéticas', help="Certificaciones relevantes para la gestión energética.")
     fecha_ultimo_entrenamiento = fields.Date(string='Último Entrenamiento', help="Fecha del último entrenamiento en gestión energética.")
-
+    dispositivo_a_cargo = fields.Many2many (
+        'electric.asset.management.dispositivo', 
+        'usuario_dispositivo_rel',
+        'usuario_id',
+        'dispositivo_id',
+        string="Dispositivos a cargo del auditor",
+        help="Equipos bajo la supervision y responsabilidad del auditor"
+    )
+    
     # Validaciones
     @api.constrains('rol', 'es_auditor_energia', 'certificaciones')
     def _check_campos_por_rol(self):
@@ -40,14 +48,51 @@ class Usuario(models.Model):
                 if record.es_auditor_energia or record.certificaciones or record.fecha_ultimo_entrenamiento:
                     raise UserError(_("Los empleados no deben tener campos de auditoría completados."))
 
-    # Método para verificar si el usuario necesita recertificación (solo para auditores)
+    @api.depends('fecha_ultimo_entrenamiento', 'rol')
     def _needs_recertification(self):
-        """Verifica si el usuario necesita recertificación basada en la fecha del último entrenamiento."""
         for record in self:
             if record.rol == 'auditor' and record.fecha_ultimo_entrenamiento:
                 years_since_training = (fields.Date.today() - record.fecha_ultimo_entrenamiento).days / 365
-                record.needs_recertification = years_since_training > 3  # Ejemplo: recertificación cada 3 años
+                record.needs_recertification = years_since_training > 3
             else:
                 record.needs_recertification = False
 
-    needs_recertification = fields.Boolean(string='Necesita Recertificación', compute='_needs_recertification', store=True)
+    needs_recertification = fields.Boolean(
+        string='Necesita Recertificación',
+        compute='_needs_recertification',
+        store=True
+    )
+
+    def _check_recetification_alert(self):
+        alerta_obj = self.env['electric.asset.management.alerta']
+        for record in self:
+            if record.needs_recertification:
+                # Verificar si ya existe una alerta pendiente para evitar duplicados
+                alerta_existente = alerta_obj.search([
+                    ('responsable', '=', record.id),
+                    ('categoria', '=', 'mantenimiento'),
+                    ('estado', '=', 'pendiente'),
+                    ('descripcion', 'ilike', 'recertificación')
+                ], limit=1)
+
+                if not alerta_existente:
+                    alerta_obj.create({
+                        'id_dispositivo': record.equipo_asignado.id if record.equipo_asignado else None,
+                        'tipo_alerta': 'manual',
+                        'descripcion': f"El auditor '{record.user_id.name}' necesita recertificación.",
+                        'responsable': record.id,
+                        'categoria': 'mantenimiento',
+                        'impacto_energetico': 'medio',
+                        'prioridad': 'media',
+                        'contacto_responsable': record.user_id.id,
+                    })
+    @api.model
+    def create(self, vals):
+        record = super(Usuario, self).create(vals)
+        record._check_recetification_alert()
+        return record
+
+    def write(self, vals):
+        result = super(Usuario, self).write(vals)
+        self._check_recetification_alert()
+        return result

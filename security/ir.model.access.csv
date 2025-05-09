@@ -5,3 +5,5 @@ access_electric_asset_management_medicion,electric.asset.management.medicion,mod
 access_electric_asset_management_alerta,electric.asset.management.alerta,model_electric_asset_management_alerta,,1,1,1,1
 access_electric_asset_management_usuario,electric.asset.management.usuario,model_electric_asset_management_usuario,,1,1,1,1
 access_electric_asset_management_reporte,electric.asset.management.reporte,model_electric_asset_management_reporte,,1,1,1,1
+access_factura_energetica_user,electric.asset.management.factura.energetica user,model_electric_asset_management_factura_energetica,base.group_user,1,1,1,1
+access_factura_energetica_manager,electric.asset.management.factura.energetica manager,model_electric_asset_management_factura_energetica,base.group_system,1,1,1,1
