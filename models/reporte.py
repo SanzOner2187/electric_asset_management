@@ -6,6 +6,12 @@ class Reporte(models.Model):
     _name = 'electric.asset.management.reporte'
     _description = 'Reportes generados por los usuarios'
 
+    factura_id = fields.Many2one(
+        'account.move', 
+        string='Factura Energética',
+        help='Factura energética asociada a este reporte.'
+    )
+
     user_id = fields.Many2one('electric.asset.management.usuario', string='Usuario', required=True)
     tipo_reporte = fields.Selection([
         ('semanal', 'Semanal'),

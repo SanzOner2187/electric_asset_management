@@ -12,7 +12,12 @@ class Dispositivo(models.Model):
     _order = 'fecha_registro desc' 
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
-    # Campos principales
+    factura_id = fields.Many2one(
+        'account.move',  
+        string='Factura Energética',
+        help='Factura energética asociada a esta medición.'
+    )
+
     name = fields.Char(string='Nombre', required=True, tracking=True)
     tipo = fields.Char(string='Tipo', tracking=True)
     marca = fields.Char(string='Marca', tracking=True)

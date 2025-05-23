@@ -6,7 +6,7 @@ class Usuario(models.Model):
     _description = 'Usuarios del sistema'
     _inherits = {'res.users': 'user_id'}
 
-    # Relación con el usuario base de Odoo
+    # relacion con los usuarios nativos de odoo
     user_id = fields.Many2one('res.users', string='Nombre', required=True, ondelete='cascade')
     login = fields.Char(related='user_id.login', string='Correo', store=True, readonly=False)
 
@@ -18,10 +18,8 @@ class Usuario(models.Model):
         ('otro', 'Otro')
     ], required = True, string='Rol', help="Rol del usuario en el sistema de gestión energética.")
 
-    # Campos específicos para empleados
     equipo_asignado = fields.Many2one('electric.asset.management.dispositivo', string='Equipo Asignado', help="Equipo asignado al empleado.")
 
-    # Campos específicos para auditores
     es_auditor_energia = fields.Boolean(string='Es Auditor de Energía', help="Indica si el usuario está certificado como auditor energético.")
     certificaciones = fields.Binary(string='Certificaciones Energéticas', help="Certificaciones relevantes para la gestión energética.")
     fecha_ultimo_entrenamiento = fields.Date(string='Último Entrenamiento', help="Fecha del último entrenamiento en gestión energética.")
@@ -34,7 +32,6 @@ class Usuario(models.Model):
         help="Equipos bajo la supervision y responsabilidad del auditor"
     )
     
-    # Validaciones
     @api.constrains('rol', 'es_auditor_energia', 'certificaciones')
     def _check_campos_por_rol(self):
         """Validación: Los campos deben ser consistentes con el rol seleccionado."""
@@ -67,7 +64,6 @@ class Usuario(models.Model):
         alerta_obj = self.env['electric.asset.management.alerta']
         for record in self:
             if record.needs_recertification:
-                # Verificar si ya existe una alerta pendiente para evitar duplicados
                 alerta_existente = alerta_obj.search([
                     ('responsable', '=', record.id),
                     ('categoria', '=', 'mantenimiento'),

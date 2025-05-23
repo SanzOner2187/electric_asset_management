@@ -5,7 +5,6 @@ class Alerta(models.Model):
     _name = 'electric.asset.management.alerta'
     _description = 'Modelo para gestionar alertas de dispositivos eléctricos'
 
-    # Campos principales
     id_dispositivo = fields.Many2one('electric.asset.management.dispositivo', string='Dispositivo', required=True, ondelete='cascade', help="Dispositivo que genero la alerta")
     tipo_alerta = fields.Selection([
         ('advertencia', 'Advertencia'),
@@ -19,6 +18,12 @@ class Alerta(models.Model):
         store=True,
         readonly=True,
         help="Zona asociada al dispositivo"
+    )
+
+    factura_id = fields.Many2one(
+        'account.move',
+        string='Factura Energética',
+        help='Factura energética asociada a esta alerta.'
     )
 
     descripcion = fields.Text(string='Descripción', required=True)
@@ -37,7 +42,6 @@ class Alerta(models.Model):
     fecha_resolucion = fields.Datetime(string='Fecha de Resolución', readonly=True)
     contacto_responsable = fields.Many2one('res.users', string='Contacto Responsable')
 
-    # Categoría e impacto energético
     categoria = fields.Selection([
         ('consumo', 'Exceso de Consumo'),
         ('eficiencia', 'Baja Eficiencia'),
@@ -51,17 +55,14 @@ class Alerta(models.Model):
         ('bajo', 'Bajo')
     ], string='Impacto Energético', required=True, default='medio')
 
-    # Recomendaciones calculadas
     recomendaciones = fields.Text(string='Recomendaciones', compute='_compute_recomendaciones')
 
-    # Referencia a medición
     medicion_id = fields.Many2one(
         'electric.asset.management.medicion', 
         string='Medición', 
         help='Referencia a la medición asociada a esta alerta.'
     )
 
-    # Validaciones
     @api.constrains('fecha_hora', 'fecha_resolucion')
     def _check_fechas(self):
         for alerta in self:
@@ -93,7 +94,6 @@ class Alerta(models.Model):
                 ])
             alerta.recomendaciones = "\n".join(recomendaciones) if recomendaciones else _("No hay recomendaciones específicas.")
 
-    # Acción para resolver una alerta
     def action_resolver_alerta(self):
         """Marca la alerta como resuelta y registra la fecha de resolución."""
         self.ensure_one()
@@ -107,7 +107,6 @@ class Alerta(models.Model):
             self.id_dispositivo.message_post(
                 body=_("Alerta resuelta: %s\nAcciones tomadas: %s") % (self.descripcion, self.acciones_tomadas)
             )
-        # Mostrar notificación de éxito
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
@@ -118,7 +117,6 @@ class Alerta(models.Model):
             }
         }
 
-    # Generar reporte
     def action_generar_reporte(self):
         """Genera un reporte basado en la alerta."""
         self.ensure_one()
@@ -140,20 +138,16 @@ class Alerta(models.Model):
             'context': {'default_' + key: val for key, val in reporte_vals.items()}
         }
     
-    # metodo para extraer datos para el dashboard
     def data_alerta_dashboard(self):
         """
         Método para extraer datos clave del modelo Alerta para mostrar en un dashboard.
         """
-        # obtener las alertas
         alertas = self.env['electric.asset.management.alerta'].search([])
 
-        # datos para kpis
         total_alertas = len(alertas)
         alertas_pendientes = len(alertas.filtered(lambda a: a.estado == 'pendiente'))
         alertas_resueltas = len(alertas.filtered(lambda a: a.estado == 'resuelta'))
 
-        # datos para gráficos
         alertas_por_prioridad = {
             dict(alertas._fields['prioridad'].selection)[p]: len(alertas.filtered(lambda a: a.prioridad == p))
             for p in ['baja', 'media', 'alta']
@@ -164,7 +158,6 @@ class Alerta(models.Model):
             for c in ['consumo', 'eficiencia', 'mantenimiento', 'calibracion', 'seguridad']
         }
 
-        # ultimas 5 alertas registradas
         ultimas_alertas = alertas.sorted(key=lambda a: a.fecha_hora, reverse=True)[:5]
         ultimas_alertas_data = [
             {
@@ -176,7 +169,6 @@ class Alerta(models.Model):
             for a in ultimas_alertas
         ]
 
-        # retornar datos
         return {
             'kpi': {
                 'total_alertas': total_alertas,

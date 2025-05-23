@@ -12,18 +12,22 @@ class Medicion(models.Model):
     Incluye cálculos de KPIs y detección de mediciones atípicas.
     """
     _order = 'fecha_hora desc'  
-    # Relaciones y campos básicos
     tipo_medicion = fields.Selection([
         ('general', 'Medición General por Zona'),
         ('zona_especifica', 'Medición por Zonas'),
         ('dispositivo', 'Medición de un Dispositivo'),
     ], string="Tipo de Medición", required=True)
 
-    # Relacionamiento según tipo de medición
     zona_id = fields.Many2one(
         'electric.asset.management.zona',
         string="Zona (General)", 
         ondelete='cascade'
+    )
+
+    factura_id = fields.Many2one(
+        'account.move',  
+        string='Factura Energética',
+        help='Factura energética asociada a esta medición.'
     )
 
     zonas_ids = fields.Many2many(
@@ -76,7 +80,6 @@ class Medicion(models.Model):
     estado_dispositivo = fields.Selection(related='id_dispositivo.estado', string="Estado del Dispositivo")
     observaciones = fields.Text(string='Observaciones')
 
-    # Campos para cumplir con ISO 50001
     temperatura_ambiente = fields.Float(string='Temperatura Ambiente (°C)', help="Temperatura ambiental registrada durante la medición")
     humedad_relativa = fields.Float(string='Humedad Relativa (%)', help="Humedad relativa registrada durante la medición")
 
