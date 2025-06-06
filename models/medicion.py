@@ -224,6 +224,7 @@ class Medicion(models.Model):
 
         if medicion.es_medicion_atipica and medicion.id_dispositivo:
             alerta_vals = {
+                'name': _("Medición de consumo anormal: %s (%.2f kWh)") % (medicion.id_dispositivo.name, medicion.consumo),
                 'id_dispositivo': medicion.id_dispositivo.id,
                 'tipo_alerta': 'advertencia',
                 'descripcion': _("Medición atípica registrada para %s: %.2f kWh")
@@ -268,6 +269,7 @@ class Medicion(models.Model):
                 raise UserError(_("No se puede generar la alerta porque el dispositivo no tiene un responsable asignado."))
 
             alerta_vals = {
+                'name': _("Medición de consumo anormal: %s (%.2f kWh)") % (medicion.id_dispositivo.name, medicion.consumo),
                 'medicion_id': medicion.id,
                 'id_dispositivo': medicion.id_dispositivo.id,
                 'tipo_alerta': 'manual',
@@ -275,8 +277,8 @@ class Medicion(models.Model):
                             % (medicion.id_dispositivo.name, medicion.consumo),
                 'prioridad': 'alta',
                 'responsable': medicion.id_dispositivo.id_usuario.id,
-                'categoria': 'consumo',  # Categoría basada en el contexto
-                'impacto_energetico': 'alto' if medicion.desviacion_estandar > 2.0 else 'medio',  # Impacto energético
+                'categoria': 'consumo',  
+                'impacto_energetico': 'alto' if medicion.desviacion_estandar > 2.0 else 'medio',  
                 'estado': 'pendiente'
             }
 

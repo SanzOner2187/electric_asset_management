@@ -5,7 +5,7 @@
         <field name="model">account.move</field>
         <field name="inherit_id" ref="account.view_move_form"/>
         <field name="arch" type="xml">
-            <!-- insertar el nuevo page de consumo -->
+            <!-- insertar el nuevo page con los campos en la vista -->
             <xpath expr="//page[@id='other_tab_entry']" position="before">
                 <page string="Consumo Energético" name="consumo_energetico_info">
                     <group>

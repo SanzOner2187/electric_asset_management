@@ -6,11 +6,10 @@ class Usuario(models.Model):
     _description = 'Usuarios del sistema'
     _inherits = {'res.users': 'user_id'}
 
-    # relacion con los usuarios nativos de odoo
+    # relacion con los usuarios nativos de odoo res.users
     user_id = fields.Many2one('res.users', string='Nombre', required=True, ondelete='cascade')
     login = fields.Char(related='user_id.login', string='Correo', store=True, readonly=False)
 
-    # Roles disponibles
     rol = fields.Selection([
         ('empleado', 'Empleado'),
         ('auditor', 'Auditor Energético'),
@@ -73,9 +72,10 @@ class Usuario(models.Model):
 
                 if not alerta_existente:
                     alerta_obj.create({
+                        'name': f"{record.user_id.name} no cuenta con una certificación reciente.",
                         'id_dispositivo': record.equipo_asignado.id if record.equipo_asignado else None,
                         'tipo_alerta': 'manual',
-                        'descripcion': f"El auditor '{record.user_id.name}' necesita recertificación.",
+                        'descripcion': f"El auditor '{record.user_id.name}' necesita recertificación, si ya se recertifico actualizar fecha de ultimo entrnamiento y adjuntar la certificación.",
                         'responsable': record.id,
                         'categoria': 'mantenimiento',
                         'impacto_energetico': 'medio',

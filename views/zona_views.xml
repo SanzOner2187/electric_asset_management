@@ -1,7 +1,6 @@
-<!-- path: views/electric_asset_management_zona_views.xml -->
 <odoo>
     <data>
-        <!-- Vista de Zonas (Tree) -->
+        <!-- vista arbol (tree) -->
         <record id="view_electric_asset_management_zona_tree" model="ir.ui.view">
             <field name="name">electric.asset.management.zona.tree</field>
             <field name="model">electric.asset.management.zona</field>
@@ -18,7 +17,7 @@
             </field>
         </record>
 
-        <!-- Vista de Zonas (Form) -->
+        <!-- vista formulario -->
         <record id="view_electric_asset_management_zona_form" model="ir.ui.view">
             <field name="name">electric.asset.management.zona.form</field>
             <field name="model">electric.asset.management.zona</field>
@@ -105,7 +104,7 @@
             </field>
         </record>
 
-        <!-- Acción y Menú para Zonas -->
+        <!-- accion y menu para Zonas -->
         <record id="action_electric_asset_management_zona" model="ir.actions.act_window">
             <field name="name">Zonas de Gestión Energética</field>
             <field name="res_model">electric.asset.management.zona</field>

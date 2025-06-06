@@ -7,10 +7,9 @@ class DashboardController(http.Controller):
     """
 
     @http.route('/electric_asset_management/dashboard', type='json', auth='user')
-    def get_dashboard_data(self, **kwargs):
+    def get_dashboard_data(self):
         """
         ruta principal para obtener todos los datos del dashboard.
-        Retorna un diccionario con los datos de alertas, mediciones, reportes, zonas y dispositivos.
         """
         # obtener los datos de cada modelo de los metodos en cada uno
         alerta_model = request.env['electric.asset.management.alerta']

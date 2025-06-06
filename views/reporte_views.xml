@@ -1,48 +1,47 @@
 <odoo>
     <data>
-        <!-- Vista Kanban Optimizada -->
+        <!-- vista kanban   -->
         <record id="view_electric_asset_management_reporte_kanban" model="ir.ui.view">
             <field name="name">electric.asset.management.reporte.kanban</field>
             <field name="model">electric.asset.management.reporte</field>
             <field name="arch" type="xml">
                 <kanban class="o_kanban_mobile">
-                    <field name="user_id"/>
+                    <field name="name"/>
                     <field name="tipo_reporte"/>
-                    <field name="fecha_generacion"/>
-                    <field name="estado"/>
                     <field name="prioridad"/>
-                    <field name="periodo_inicio"/>
-                    <field name="periodo_fin"/>
+                    <field name="estado"/>
+                    <field name="fecha_generacion"/>
+                    <field name="zona_id"/>
                     <field name="consumo_total"/>
                     <field name="eficiencia_energetica"/>
-                    <field name="objetivos_cumplidos"/>
-                    <field name="alerta_eficiencia"/>
                     <templates>
                         <t t-name="kanban-box">
                             <div t-attf-class="oe_kanban_global_click oe_kanban_card oe_kanban_color_{{ kanban_getcolor(record.prioridad.value) }}">
                                 <div class="o_kanban_record_title d-flex justify-content-between align-items-center">
-                                    <strong><field name="tipo_reporte"/></strong>
+                                    <strong><field name="name"/></strong>
                                     <span class="badge"
                                           t-att-class="{
-                                              'badge-danger': record.alerta_eficiencia.raw_value === true,
-                                              'badge-warning': record.alerta_eficiencia.raw_value === false,
-                                              'badge-info': !record.alerta_eficiencia.raw_value
+                                              'badge-danger': record.prioridad.raw_value === 'alta',
+                                              'badge-warning': record.prioridad.raw_value === 'media',
+                                              'badge-info': record.prioridad.raw_value === 'baja'
                                           }">
-                                        <t t-if="record.alerta_eficiencia.raw_value">Alerta</t>
-                                        <t t-else="">Normal</t>
+                                        <field name="prioridad"/>
                                     </span>
                                 </div>
-
                                 <div class="d-flex justify-content-between align-items-center mt-2">
-                                    <span><field name="periodo_inicio"/> - <field name="periodo_fin"/></span>
-                                    <span><strong><field name="consumo_total"/> kWh</strong></span>
+                                    <span><field name="zona_id"/></span>
+                                    <span>
+                                        <i class="fa fa-bolt text-primary mr-1"/>
+                                        <field name="consumo_total"/> kWh
+                                    </span>
                                 </div>
-
                                 <div class="d-flex justify-content-between align-items-center mt-2">
-                                    <span>Prioridad: <field name="prioridad"/></span>
+                                    <span>
+                                        <i class="fa fa-tachometer-alt mr-1"/>
+                                        <field name="eficiencia_energetica"/>%
+                                    </span>
                                     <span>Estado: <field name="estado"/></span>
                                 </div>
-
                                 <div class="text-right mt-2">
                                     <small class="text-muted"><field name="fecha_generacion"/></small>
                                 </div>
@@ -53,19 +52,17 @@
             </field>
         </record>
 
-        <!-- Vista Formulario Mejorada -->
+        <!-- vista formulario   -->
         <record id="view_electric_asset_management_reporte_form" model="ir.ui.view">
             <field name="name">electric.asset.management.reporte.form</field>
             <field name="model">electric.asset.management.reporte</field>
             <field name="arch" type="xml">
                 <form>
                     <header>
-                        <!-- Botones de acción -->
                         <button name="action_generar_reporte_iso50001" string="Generar ISO 50001" type="object" class="btn-primary"
                                 attrs="{'invisible': [('estado','!=','borrador')]}"/>
                         <button name="action_enviar_reporte" string="Enviar Reporte" type="object" class="btn-secondary"
                                 attrs="{'invisible': ['|', ('estado','!=','generado'), ('contenido','=',False)]}"/>
-                        <!-- Estado del reporte -->
                         <field name="estado" widget="statusbar" statusbar_visible="borrador,generado,enviado"/>
                     </header>
                     <sheet>
@@ -74,6 +71,7 @@
                         </div>
                         <group>
                             <group string="Información General">
+                                <field name="name"/>
                                 <field name="user_id" string="Usuario"/>
                                 <field name="tipo_reporte" placeholder="Seleccione el tipo de reporte"/>
                                 <field name="zona_id" placeholder="Zona asociada al reporte"/>

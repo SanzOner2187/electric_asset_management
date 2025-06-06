@@ -5,7 +5,7 @@ from dateutil.relativedelta import relativedelta
 class Zona(models.Model):
     _name = 'electric.asset.management.zona'
     _description = 'Zonas de la empresa'
-    _order = 'name'  # ordenar por nombre
+    _order = 'name'  
     _parent_name = 'zona_padre'  # campo que define la relacion padre - hijo
     _parent_store = True  # habilita almacenamiento de jerarquia 
     _rec_name = 'complete_name'  # usa nombre completo para jerarquia

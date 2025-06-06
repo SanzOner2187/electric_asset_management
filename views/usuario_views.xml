@@ -1,6 +1,6 @@
 <odoo>
     <data>
-        <!-- Vista de Usuarios (Tree) -->
+        <!-- vista arbol (tree) -->
         <record id="view_electric_asset_management_usuario_tree" model="ir.ui.view">
             <field name="name">electric.asset.management.usuario.tree</field>
             <field name="model">electric.asset.management.usuario</field>
@@ -15,7 +15,7 @@
             </field>
         </record>
 
-        <!-- Vista de Usuarios (Form) -->
+        <!-- vista formulario -->
         <record id="view_electric_asset_management_usuario_form" model="ir.ui.view">
             <field name="name">electric.asset.management.usuario.form</field>
             <field name="model">electric.asset.management.usuario</field>
@@ -43,7 +43,7 @@
             </field>
         </record>
 
-        <!-- Acción y Menú para Usuarios -->
+        <!-- accion y menu para Usuarios -->
         <record id="action_electric_asset_management_usuario" model="ir.actions.act_window">
             <field name="name">Usuarios del Sistema</field>
             <field name="res_model">electric.asset.management.usuario</field>

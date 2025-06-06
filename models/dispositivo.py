@@ -71,7 +71,6 @@ class Dispositivo(models.Model):
         help="Factura energética asociada a este dispositivo"
     )
 
-    # ISO 50001
     es_equipo_critico = fields.Boolean(string='Equipo Crítico', help="Equipos con mayor consumo según análisis ISO 50001")
     umbral_alerta_consumo = fields.Float(string='Umbral de Alerta (Watts)', help="Consumo máximo permitido antes de generar alerta")
     fecha_calibracion = fields.Date(string='Fecha de Calibración', tracking=True)
@@ -91,7 +90,6 @@ class Dispositivo(models.Model):
         string='Mediciones'
     )
 
-    # Métodos de cálculo
     @api.depends('consumo_energetico', 'potencia_bajo_consumo', 'modo_bajo_consumo')
     def _compute_eficiencia_operativa(self):
         for dispositivo in self:
@@ -149,7 +147,6 @@ class Dispositivo(models.Model):
                 _logger.warning(f"División por cero al calcular EnPI para el dispositivo {dispositivo.name}")
                 dispositivo.enpi = 0.0
 
-    # Cálculo de consumo
     @api.depends('consumo_energetico', 'horas_uso_diario')
     def _calcular_consumo_diario(self):
         for dispositivo in self:
@@ -186,7 +183,6 @@ class Dispositivo(models.Model):
                 _logger.error(f"Error al calcular costo mensual: {e}")
                 dispositivo.costo_mensual = 0.0
 
-    # Manejo de fechas
     @api.depends('fecha_calibracion')
     def _compute_proxima_calibracion(self):
         for dispositivo in self:
@@ -220,46 +216,74 @@ class Dispositivo(models.Model):
         else:
             self.contacto_responsable = False
 
-    @api.constrains('consumo_energetico', 'umbral_alerta_consumo', 'horas_uso_diario', 'dias_uso_semana')
+    @api.constrains('consumo_energetico', 'potencia_bajo_consumo', 'modo_bajo_consumo', 'umbral_alerta_consumo', 'horas_uso_diario', 'dias_uso_semana')
     def _check_valores(self):
         for dispositivo in self:
-            if dispositivo.umbral_alerta_consumo > 0 and dispositivo.consumo_energetico > dispositivo.umbral_alerta_consumo:
+            # Calcular consumo ajustado igual que en el botón
+            consumo_ajustado = dispositivo.consumo_energetico
+            if dispositivo.modo_bajo_consumo and dispositivo.potencia_bajo_consumo > 0:
+                consumo_ajustado = dispositivo.potencia_bajo_consumo
+
+            if dispositivo.umbral_alerta_consumo > 0 and consumo_ajustado > dispositivo.umbral_alerta_consumo:
                 dispositivo.action_generar_alerta_consumo()
             if dispositivo.horas_uso_diario < 0 or dispositivo.dias_uso_semana < 0:
                 raise ValidationError(_("Las horas de uso diario y días de uso por semana no pueden ser negativos."))
 
     def action_generar_alerta_consumo(self):
-        """Genera una alerta de consumo y muestra un mensaje al usuario."""
+        """Genera una alerta de consumo basada en las condiciones del dispositivo."""
         self.ensure_one()
         try:
+            # Validaciones iniciales
             if not self.umbral_alerta_consumo or self.umbral_alerta_consumo <= 0:
                 raise UserError(_("El umbral de alerta de consumo no está configurado correctamente."))
             if not self.consumo_energetico or self.consumo_energetico <= 0:
                 raise UserError(_("El consumo energético del dispositivo no está configurado correctamente."))
 
-            tipo_alerta = 'critica' if self.consumo_energetico > self.umbral_alerta_consumo * 1.2 else 'advertencia'
+            consumo_ajustado = self.consumo_energetico
+            if self.modo_bajo_consumo and self.potencia_bajo_consumo > 0:
+                consumo_ajustado = self.potencia_bajo_consumo
 
-            default_vals = {
-                'id_dispositivo': self.id,
-                'tipo_alerta': tipo_alerta,
-                'descripcion': _("El dispositivo %s está consumiendo %s W, superando el umbral de %s W") % 
-                                (self.name, self.consumo_energetico, self.umbral_alerta_consumo),
-                'prioridad': 'alta',
-                'responsable': self.id_usuario.id if self.id_usuario else False,
-                'estado': 'pendiente', 
-                'categoria': 'consumo',  
-                'impacto_energetico': 'alto' if tipo_alerta == 'critica' else 'medio',  
-            }
-            alerta = self.env['electric.asset.management.alerta'].create(default_vals)
+            if consumo_ajustado > self.umbral_alerta_consumo:
+                tipo_alerta = 'critica' if consumo_ajustado > self.umbral_alerta_consumo * 1.2 else 'advertencia'
 
-            return {
-            'name': _('Alerta de Eficiencia Energética'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'electric.asset.management.alerta',
-            'view_mode': 'form',
-            'target': 'new',  # Abre el formulario como un modal
-            'context': {'default_' + key: val for key, val in default_vals.items()}  # Valores predeterminados
-        }
+                descripcion = _(
+                    "El dispositivo '%s' está consumiendo %s W, superando el umbral de %s W.\n"
+                    "Horas de uso diario: %s\nDías de uso por semana: %s\nPotencia en bajo consumo: %s W"
+                ) % (
+                    self.name,
+                    consumo_ajustado,
+                    self.umbral_alerta_consumo,
+                    self.horas_uso_diario,
+                    self.dias_uso_semana,
+                    self.potencia_bajo_consumo if self.modo_bajo_consumo else _("No aplica")
+                )
+
+                # crear la alerta
+                default_vals = {
+                    'name': 'Exceso de consumo en Watts (W)',
+                    'id_dispositivo': self.id,
+                    'tipo_alerta': tipo_alerta,
+                    'descripcion': descripcion,
+                    'prioridad': 'alta' if tipo_alerta == 'critica' else 'media',
+                    'responsable': self.id_usuario.id if self.id_usuario else False,
+                    'estado': 'pendiente',
+                    'categoria': 'consumo',
+                    'impacto_energetico': 'alto' if tipo_alerta == 'critica' else 'medio',
+                }
+                alerta = self.env['electric.asset.management.alerta'].create(default_vals)
+
+                # retorna accion para mostrar la alerta
+                return {
+                    'name': _('Alerta de Eficiencia Energética'),
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'electric.asset.management.alerta',
+                    'view_mode': 'form',
+                    'target': 'new',
+                    'context': {'default_' + key: val for key, val in default_vals.items()}
+                }
+
+            else:
+                raise UserError(_("El consumo ajustado no supera el umbral de alerta configurado."))
 
         except UserError as ue:
             _logger.error(f"Error al generar alerta de consumo: {ue}")
@@ -267,12 +291,10 @@ class Dispositivo(models.Model):
         except Exception as e:
             _logger.error(f"Error inesperado al generar alerta de consumo: {e}")
             raise UserError(_("Ocurrió un error inesperado al generar la alerta. Por favor, revise los registros del sistema."))
-
+    
     def action_generar_reporte_eficiencia(self):
         """Abre un modal para generar un reporte de eficiencia energética."""
-        self.ensure_one()  # Asegurarse de que solo se ejecute para un registro
-
-        # Preparar los valores predeterminados para el formulario
+        self.ensure_one()  
         default_vals = {
             'tipo_reporte': 'auditoria',
             'contenido': _("Reporte de Eficiencia Energética para %s\n"
@@ -288,14 +310,13 @@ class Dispositivo(models.Model):
             'estado': 'generado'
         }
 
-        # Abrir el formulario en modo "Crear" con valores predeterminados
         return {
             'name': _('Reporte de Eficiencia Energética'),
             'type': 'ir.actions.act_window',
             'res_model': 'electric.asset.management.reporte',
             'view_mode': 'form',
-            'target': 'new',  # Abre el formulario como un modal
-            'context': {'default_' + key: val for key, val in default_vals.items()}  # Valores predeterminados
+            'target': 'new',  
+            'context': {'default_' + key: val for key, val in default_vals.items()}  
         }
 
     from odoo import models
@@ -304,10 +325,8 @@ class Dispositivo(models.Model):
         """
         Método para extraer datos clave del modelo Dispositivo para mostrar en un dashboard.
         """
-        # Consulta principal para obtener todos los dispositivos
         dispositivos = self.env['electric.asset.management.dispositivo'].search([])
 
-        # Datos para KPIs
         total_dispositivos = self.env['electric.asset.management.dispositivo'].search_count([])
         equipos_criticos = len(dispositivos.filtered(lambda d: d.es_equipo_critico))
         consumo_total_mensual = sum(dispositivos.mapped('consumo_mensual_kwh'))
@@ -316,19 +335,16 @@ class Dispositivo(models.Model):
             sum(dispositivos.mapped('eficiencia_operativa')) / total_dispositivos if total_dispositivos > 0 else 0
         )
 
-        # Alertas pendientes relacionadas con dispositivos
         alertas_pendientes = self.env['electric.asset.management.alerta'].search_count([
             ('id_dispositivo', 'in', dispositivos.ids),
             ('estado', '=', 'pendiente')
         ])
 
-        # Distribución de dispositivos por estado
         distribucion_por_estado = {
             dict(dispositivos._fields['estado'].selection)[estado]: len(dispositivos.filtered(lambda d: d.estado == estado))
             for estado in dict(dispositivos._fields['estado'].selection).keys()
         }
 
-        # Retornar datos estructurados
         return {
             'kpi': {
                 'equipos_criticos': equipos_criticos,

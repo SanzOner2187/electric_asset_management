@@ -25,12 +25,13 @@ class Reporte(models.Model):
         ('media', 'Media'),
         ('alta', 'Alta')
     ], string='Prioridad', default='media', required=True)
+    
     zona_id = fields.Many2one(
-        related = 'dispositivos_afectados.id_zona',
-        string = 'Zona',
-        required = True,
-        ondelete = 'restrict',
-        help = "Zona asociada al reporte"
+        'electric.asset.management.zona',
+        string='Zona',
+        store=True,
+        compute='_compute_zona_id',
+        help="Zona asociada al reporte"
     )
     fecha_generacion = fields.Datetime(string='Fecha de Generación', default=fields.Datetime.now)
     contenido = fields.Text(string='Contenido', required=True)
@@ -42,8 +43,7 @@ class Reporte(models.Model):
         relation='reporte_dispositivo_rel',
         column1='reporte_id',
         column2='dispositivo_id',
-        string='Dispositivos Afectados',
-        required=True
+        string='Dispositivos Afectados'
     )
     
     consumo_total = fields.Float(string='Consumo Total (kWh)', required=True)
@@ -63,32 +63,24 @@ class Reporte(models.Model):
     acciones_correctivas = fields.Text(string='Acciones Correctivas Propuestas')
     seguimiento_requerido = fields.Boolean(string='Requiere Seguimiento')
 
-    # Nuevos campos para cumplir con ISO 50001 y mejorar el dashboard
     politica_energetica = fields.Text(string='Política Energética', help="Describa la política energética aplicable a este reporte.")
     resumen_dashboard = fields.Text(string='Resumen para Dashboard', compute='_compute_resumen_dashboard', store=True)
     alerta_eficiencia = fields.Boolean(string='Alerta de Eficiencia', compute='_compute_alerta_eficiencia')
 
-    # filepath: /opt/odoo16/16.0/extra-addons/santiago/electric_asset_management/models/reporte.py
     name = fields.Char(
         string='Nombre del Reporte',
-        compute='_compute_name',
-        store=True,
-        help="Nombre generado automáticamente para identificar el reporte"
+        required=True,
+        help="Nombre para identificar el reporte"
     )
 
-    @api.depends('tipo_reporte', 'fecha_generacion')
-    def _compute_name(self):
-        for reporte in self:
-            reporte.name = f"{dict(self._fields['tipo_reporte'].selection).get(reporte.tipo_reporte, 'Reporte')} - {reporte.fecha_generacion.strftime('%Y-%m-%d') if reporte.fecha_generacion else ''}"
 
-    # Validación de fechas
     @api.constrains('periodo_inicio', 'periodo_fin')
     def _check_periodo_fechas(self):
         for reporte in self:
             if reporte.periodo_inicio and reporte.periodo_fin:
                 if reporte.periodo_inicio >= reporte.periodo_fin:
                     raise UserError(_("La fecha de inicio debe ser anterior a la fecha de fin."))
-    # Validación de dispositivos afectados
+
     @api.constrains('dispositivos_afectados')
     def _check_dispositivos_zona(self):
         for reporte in self:
@@ -96,24 +88,20 @@ class Reporte(models.Model):
             if len(zonas) > 1:
                 raise UserError(_("Todos los dispositivos afectados deben pertenecer a la misma zona."))
 
-    # Cálculo centralizado del consumo de referencia
     def _calcular_consumo_referencia(self):
         self.ensure_one()
-        # Convertir los valores de los campos a objetos datetime
         periodo_inicio_dt = fields.Datetime.to_datetime(self.periodo_inicio)
         periodo_fin_dt = fields.Datetime.to_datetime(self.periodo_fin)
 
-        # Calcular la diferencia en días
         if periodo_inicio_dt and periodo_fin_dt:
             diferencia_dias = (periodo_fin_dt - periodo_inicio_dt).days
             return sum(
                 dispositivo.consumo_mensual_kwh * 
-                (diferencia_dias / 30)  # Suponiendo un mes promedio de 30 días
+                (diferencia_dias / 30)  # promedio de 30 dias
                 for dispositivo in self.dispositivos_afectados
             )
         return 0.0
 
-    # Computar si se cumplieron los objetivos
     @api.depends('consumo_total', 'dispositivos_afectados', 'periodo_inicio', 'periodo_fin')
     def _compute_objetivos_cumplidos(self):
         for reporte in self:
@@ -125,7 +113,6 @@ class Reporte(models.Model):
             else:
                 reporte.objetivos_cumplidos = False
 
-    # Computar la desviación del objetivo
     @api.depends('consumo_total', 'dispositivos_afectados', 'periodo_inicio', 'periodo_fin')
     def _compute_desviacion_objetivo(self):
         for reporte in self:
@@ -137,7 +124,6 @@ class Reporte(models.Model):
             else:
                 reporte.desviacion_objetivo = 0.0
 
-    # Computar el EnPI promedio
     @api.depends('dispositivos_afectados')
     def _compute_enpi_promedio(self):
         for reporte in self:
@@ -146,7 +132,6 @@ class Reporte(models.Model):
             else:
                 reporte.enpi_promedio = 0.0
 
-    # Computar áreas de mejora
     @api.depends('dispositivos_afectados', 'objetivos_cumplidos')
     def _compute_areas_mejora(self):
         for reporte in self:
@@ -160,22 +145,19 @@ class Reporte(models.Model):
                     areas.add(_("Actualización de equipos con etiqueta baja (%s)") % dispositivo.name)
             reporte.areas_mejora = "\n".join(areas) if areas else _("No se identificaron áreas críticas de mejora.")
 
-    # Computar resumen para el dashboard
     @api.depends('consumo_total', 'eficiencia_energetica', 'objetivos_cumplidos')
     def _compute_resumen_dashboard(self):
         for reporte in self:
             resumen = f"Consumo: {reporte.consumo_total} kWh | Eficiencia: {reporte.eficiencia_energetica}%"
             if not reporte.objetivos_cumplidos:
-                resumen += " ⚠️ Objetivo no cumplido"
+                resumen += " Objetivo no cumplido"
             reporte.resumen_dashboard = resumen
 
-    # Computar alerta de eficiencia
     @api.depends('eficiencia_energetica')
     def _compute_alerta_eficiencia(self):
         for reporte in self:
             reporte.alerta_eficiencia = reporte.eficiencia_energetica < 75.0
 
-    # Acción para generar un reporte ISO 50001
     def action_generar_reporte_iso50001(self):
         self.ensure_one()
         if not self.dispositivos_afectados:
@@ -207,7 +189,6 @@ class Reporte(models.Model):
         })
         return True
 
-    # Acción para enviar el reporte
     def action_enviar_reporte(self):
         self.ensure_one()
         if self.estado != 'generado':
@@ -232,20 +213,16 @@ class Reporte(models.Model):
             }
         }
 
-    # metodo para extraer datos para el dashboard
     def data_reporte_dashboard(self):
         """
         Método para extraer datos clave del modelo Reporte para mostrar en un dashboard.
         """
-        # traer reportes
         reportes = self.env['electric.asset.management.reporte'].search([])
 
-        # datos para kpis
         total_reportes = len(reportes)
         reportes_objetivos_cumplidos = len(reportes.filtered(lambda r: r.objetivos_cumplidos))
         promedio_eficiencia = sum(r.eficiencia_energetica for r in reportes) / total_reportes if total_reportes > 0 else 0.0
 
-        # datos para graficos
         reportes_por_tipo = {
             dict(reportes._fields['tipo_reporte'].selection)[tipo]: len(reportes.filtered(lambda r: r.tipo_reporte == tipo))
             for tipo in ['semanal', 'mensual', 'repentino', 'auditoria', 'cumplimiento']
@@ -256,7 +233,6 @@ class Reporte(models.Model):
             for estado in ['borrador', 'generado', 'enviado']
         }
 
-        # ultimos 5 reportes
         ultimos_reportes = reportes.sorted(key=lambda r: r.fecha_generacion, reverse=True)[:5]
         ultimos_reportes_data = [
             {
@@ -269,7 +245,6 @@ class Reporte(models.Model):
             for r in ultimos_reportes
         ]
 
-        # retornar datos
         return {
             'kpi': {
                 'total_reportes': total_reportes,
@@ -290,3 +265,12 @@ class Reporte(models.Model):
         este metodo actua como puente para poder acceder a los datos calculados
         """
         return self.data_reporte_dashboard()
+
+    @api.depends('dispositivos_afectados')
+    def _compute_zona_id(self):
+        for reporte in self:
+            zonas = {d.id_zona.id for d in reporte.dispositivos_afectados if d.id_zona}
+            if len(zonas) == 1:
+                reporte.zona_id = list(zonas)[0]
+            else:
+                reporte.zona_id = False

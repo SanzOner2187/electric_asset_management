@@ -1,6 +1,6 @@
 <odoo>
     <data>
-        <!-- Vista de Dispositivos (Tree) -->
+        <!-- vista arbol (tree) -->
         <record id="view_electric_asset_management_dispositivo_tree" model="ir.ui.view">
             <field name="name">electric.asset.management.dispositivo.tree</field>
             <field name="model">electric.asset.management.dispositivo</field>
@@ -22,20 +22,18 @@
             </field>
         </record>
 
-        <!-- Vista de Dispositivos (Form) -->
+        <!-- vista formulario -->
         <record id="view_electric_asset_management_dispositivo_form" model="ir.ui.view">
             <field name="name">electric.asset.management.dispositivo.form</field>
             <field name="model">electric.asset.management.dispositivo</field>
             <field name="arch" type="xml">
                 <form>
                     <header>
-                        <!-- Botones principales -->
                         <button name="action_generar_reporte_eficiencia" type="object" class="btn-primary" string="Generar Reporte de Eficiencia" icon="fa-file-text"/>
                         <button name="action_generar_alerta_consumo" type="object" class="btn-primary" string="Generar Alerta" icon="fa-exclamation-triangle"
                                 attrs="{'invisible': [('umbral_alerta_consumo', '=', 0)]}"/>
                     </header>
                     <sheet>
-                        <!-- Información General -->
                         <group string="Información General">
                             <group>
                                 <field name="name" required="1" placeholder="Ingrese el nombre del dispositivo" help="Nombre único que identifica al dispositivo."/>
@@ -54,13 +52,11 @@
                             </group>
                         </group>
 
-                        <!-- Responsable -->
                         <group string="Responsable">
                             <field name="id_usuario" required="1" placeholder="Seleccione el usuario responsable" help="Usuario responsable del dispositivo."/>
                             <field name="contacto_responsable" placeholder="Ingrese el contacto del responsable" readonly="1" help="Información de contacto del responsable."/>
                         </group>
 
-                        <!-- Consumo Energético -->
                         <group string="Consumo Energético">
                             <group>
                                 <field name="consumo_energetico" required="1" placeholder="En kW" help="Consumo energético del dispositivo en kilovatios (kW)."/>
@@ -83,7 +79,6 @@
                             </group>
                         </group>
 
-                        <!-- Mantenimiento -->
                         <group string="Mantenimiento">
                             <field name="fecha_ultima_revision" placeholder="Fecha de última revisión" help="Fecha de la última revisión o mantenimiento realizado."/>
                             <field name="fuente_alimentacion" placeholder="Ejemplo: Corriente alterna" help="Fuente de alimentación del dispositivo."/>
@@ -91,7 +86,6 @@
                             <field name="proxima_calibracion" placeholder="Próxima fecha de calibración" help="Fecha programada para la próxima calibración."/>
                         </group>
 
-                        <!-- Pestañas ISO 50001 -->
                         <notebook>
                             <page string="Indicadores ISO 50001">
                                 <group>
@@ -120,7 +114,7 @@
             </field>
         </record>
 
-        <!-- Acción y Menú para Dispositivos -->
+        <!-- accion y menu para Dispositivos -->
         <record id="action_electric_asset_management_dispositivo" model="ir.actions.act_window">
             <field name="name">Todos los dispositivos en la empresa</field>
             <field name="res_model">electric.asset.management.dispositivo</field>

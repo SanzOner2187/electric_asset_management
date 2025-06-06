@@ -2,6 +2,8 @@
     <data>
         <record id="action_electric_asset_management_dashboard" model="ir.actions.client">
             <field name="name">Electric Asset Management Dashboard</field>
+
+            <!-- traer accion desde JS para abrir template-->
             <field name="tag">owl.electric_dashboard</field> 
         </record>
     </data>

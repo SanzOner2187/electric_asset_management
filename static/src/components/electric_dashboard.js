@@ -18,7 +18,7 @@ export class ElectricDashboard extends Component {
     async GetDataDashboard () {
         try {   
         const data = await rpc('/electric_asset_management/dashboard', {
-            metthod: 'GET',
+            method: 'GET',
         });
         
         this.data = data;   

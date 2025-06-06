@@ -5,7 +5,13 @@ class Alerta(models.Model):
     _name = 'electric.asset.management.alerta'
     _description = 'Modelo para gestionar alertas de dispositivos eléctricos'
 
-    id_dispositivo = fields.Many2one('electric.asset.management.dispositivo', string='Dispositivo', required=True, ondelete='cascade', help="Dispositivo que genero la alerta")
+    id_dispositivo = fields.Many2one(
+        'electric.asset.management.dispositivo', 
+        string='Dispositivo', 
+        ondelete='cascade', 
+        help="Dispositivo que genero la alerta"
+    )
+
     tipo_alerta = fields.Selection([
         ('advertencia', 'Advertencia'),
         ('manual', 'Manual'),
@@ -61,6 +67,11 @@ class Alerta(models.Model):
         'electric.asset.management.medicion', 
         string='Medición', 
         help='Referencia a la medición asociada a esta alerta.'
+    )
+
+    name = fields.Char(
+        string='Nombre de la Alerta',
+        help="Nombre generado automáticamente para identificar la alerta.",
     )
 
     @api.constrains('fecha_hora', 'fecha_resolucion')

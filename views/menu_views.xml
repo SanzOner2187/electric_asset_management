@@ -1,6 +1,8 @@
 <odoo>
     <data>
-        <menuitem 
+
+        <!-- menu principal o menu padre, donde se mostraran todas las demas vistas-->
+        <menuitem
             id="menu_electric_asset_management_root" 
             name="Gestión de Activos Eléctricos" 
             sequence="10"
