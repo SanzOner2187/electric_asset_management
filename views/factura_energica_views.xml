@@ -5,14 +5,16 @@
         <field name="model">account.move</field>
         <field name="inherit_id" ref="account.view_move_form"/>
         <field name="arch" type="xml">
-            <!-- insertar el nuevo page con los campos en la vista -->
+            <!-- insertar el nuevo page con los campos en la vista
+            solo se muestra en el page de factura de proveedor -->
             <xpath expr="//page[@id='other_tab_entry']" position="before">
-                <page string="Consumo Energético" name="consumo_energetico_info">
+                <page string="Consumo Energético" name="consumo_energetico_info"
+                      attrs="{'invisible': [('move_type', '!=', 'in_invoice')]}">
                     <group>
                         <group>
                             <field name="factura_energetica"/>
                             <field name="zonas_consumo_ids" widget="many2many_tags"/>
-                            <field name="dispositivos_ids" widget="many2many_tags" readonly="1"/>
+                            <field name="dispositivos_ids" widget="many2many_tags"/>
                             <field name="consumo_total_usuario"/>
                             <field name="consumo_total_sistema"/>
                             <field name="diferencia_consumo"/>

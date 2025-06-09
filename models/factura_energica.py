@@ -35,7 +35,6 @@ class FacturaEnergetica(models.Model):
         'dispositivo_id',
         string='Dispositivos Asociados',
         help="Dispositivos cuyo consumo se refleja en esta factura.",
-        readonly=True
     )
 
 
@@ -108,7 +107,7 @@ class FacturaEnergetica(models.Model):
         help="Eficiencia promedio de los dispositivos asociados"
     )
 
-    # Cálculo actualizado del total a pagar según el sistema
+    # calculo del total a pagar segun el sistema
     total_pagar_sistema = fields.Float(
         string='Total a Pagar (Sistema) ($)',
         compute='_calcular_total_pagar_sistema',
@@ -122,11 +121,11 @@ class FacturaEnergetica(models.Model):
         Calcular el costo total basado en los dispositivos asociados a las zonas seleccionadas.
         """
         for factura in self:
-            # Buscar dispositivos relacionados con las zonas seleccionadas
+            # busca los dispositivos relacionados a las zonas seleccionadas
             dispositivos = self.env['electric.asset.management.dispositivo'].search([
                 ('id_zona', 'in', factura.zonas_consumo_ids.ids)
             ])
-            # Sumar el costo mensual de todos los dispositivos
+            # suma el costo mensual de los dipositivos
             factura.costo_total_sistema = sum(dispositivo.costo_mensual for dispositivo in dispositivos)
 
     @api.constrains('factura_energetica', 'zonas_consumo_ids', 'consumo_total_usuario', 'dispositivos_ids')
@@ -150,7 +149,6 @@ class FacturaEnergetica(models.Model):
         y calcular el consumo total de los dispositivos de esas zonas.
         """
         for factura in self:
-            # Obtener dispositivos asociados a las zonas seleccionadas
             dispositivos = self.env['electric.asset.management.dispositivo'].search([
                 ('id_zona', 'in', factura.zonas_consumo_ids.ids)
             ])
@@ -158,7 +156,7 @@ class FacturaEnergetica(models.Model):
 
             # Calcular el consumo total de los dispositivos de las zonas seleccionadas
             consumo_total_zonas = sum(dispositivo.consumo_energetico for dispositivo in dispositivos)
-            factura.consumo_total = consumo_total_zonas
+            factura.consumo_total_usuario = consumo_total_zonas  # Si quieres que se actualice automáticamente
 
     @api.depends('zonas_consumo_ids', 'dispositivos_ids')
     def _compute_alertas_ids(self):
@@ -168,7 +166,7 @@ class FacturaEnergetica(models.Model):
         for factura in self:
             if factura.invoice_date and factura.invoice_date_due:
                 alertas = self.env['electric.asset.management.alerta'].search([
-                    ('factura_id', '=', factura.id),  # Asegúrate de que 'factura_id' exista en el modelo 'alerta'
+                    ('factura_id', '=', factura.id),  
                     ('fecha_alerta', '>=', factura.invoice_date),
                     ('fecha_alerta', '<=', factura.invoice_date_due)
                 ])
